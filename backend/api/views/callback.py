@@ -11,7 +11,6 @@ from api.services.auth import get_auth_header, get_callback_url
 class CallbackView(APIView):
     def get(self, request):
         code = request.query_params.get('code')
-        print(code)
 
         res = requests.post("https://accounts.spotify.com/api/token", data={
             'grant_type': 'authorization_code',
@@ -20,7 +19,6 @@ class CallbackView(APIView):
         }, headers={'Authorization': f"Basic {get_auth_header()}", 'Content-Type': 'application/x-www-form-urlencoded'})
 
         data = res.json()
-        print(data)
         access_token = data['access_token']
         refresh_token = data['refresh_token']
         token_expires = data['expires_in']
