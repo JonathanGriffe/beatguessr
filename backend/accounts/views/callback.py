@@ -5,8 +5,8 @@ import requests
 from rest_framework.views import APIView
 from django.contrib.auth import login
 
-from api.models import CustomUser
-from api.services.auth import get_auth_header, get_callback_url
+from accounts.models import CustomUser
+from accounts.services.auth import get_auth_header, get_callback_url
 
 class CallbackView(APIView):
     def get(self, request):

@@ -7,7 +7,7 @@ function App() {
   const navigate = useNavigate();
   let [name, setName] = useState("...");
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/user/`, {
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/accounts/user/`, {
       method: 'GET',
       credentials: 'include',
     }).then(successOrRedirect(navigate)).then(res => res.json())
