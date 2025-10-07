@@ -12,7 +12,7 @@ function Callback() {
             
         if (code) {
             // Exchange the authorization code for an access token
-            fetch(`${process.env.REACT_APP_BACKEND_URL}/accounts/callback?code=${code}`, {
+            fetch(`/api/accounts/callback/?code=${code}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
