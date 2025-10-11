@@ -24,10 +24,10 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        LOGGED IN AS {name}
-      </header>
+    <div className="flex flex-col gap-4 items-center justify-center min-h-screen">
+      <div className="text-6xl text-darkblue"><span>
+        Logged in as </span><h1 className="font-bold inline text-greenblue">{name}</h1>
+      </div>
       <>{ token ? <WebPlayback token={token} /> : '' }</>
     </div>
   );

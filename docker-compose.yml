@@ -21,8 +21,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     ports:
-      - "3000:3000"
-    command: ["npm", "start"]
+      - "5173:5173"
     depends_on:
       - backend
 

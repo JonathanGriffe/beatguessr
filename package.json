@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "@radix-ui/react-slot": "^1.2.3"
+    "@radix-ui/react-slot": "^1.2.3",
+    "@types/spotify-web-playback-sdk": "^0.1.19",
+    "http-proxy-middleware": "^3.0.5",
+    "react-router": "^7.9.4"
   }
 }
