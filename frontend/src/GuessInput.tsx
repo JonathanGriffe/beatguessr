@@ -1,25 +1,23 @@
+import React from "react";
+import { Input } from "./components/ui/input";
 
 function GuessInput(props: {
   value: string;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
-  status: 'correct' | 'wrong' | 'default';
+  labelColor: 'green' | 'red' | 'black';
 }) {
-    const { value, onChange, onKeyDown, status } = props;
-    const labelColor = status === 'correct' ? 'green' : status === 'wrong' ? 'red' : 'black';
-    const labelText = status === 'correct' ? 'Correct!' : status === 'wrong' ? 'Wrong!' : 'Your answer:';
 
+
+    const { value, onChange, onKeyDown } = props;
   return (
-    <div className="guess-input">
-      <label style={{ color: labelColor }}>{labelText}</label>
-      <input
-        type="text"
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        style={{ borderColor: labelColor }}
-      />
-    </div>
+    <Input
+      type="text"
+      value={value}
+      onChange={onChange}
+      onKeyDown={onKeyDown}
+      style={{ borderColor: props.labelColor }}
+    />
   );
 }
 

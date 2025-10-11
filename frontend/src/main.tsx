@@ -4,6 +4,7 @@ import App from './App';
 import Login from './Login';
 import Callback from './Callback';
 import { BrowserRouter, Routes, Route } from 'react-router';
+import Quiz from './Quiz';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -16,6 +17,7 @@ root.render(
       <Route path="/" element={<App />} />
       <Route path="/login" element={<Login />} />
       <Route path="/callback" element={<Callback />} />
+      <Route path="/quiz" element={<Quiz />} />
     </Routes>
   </BrowserRouter>
 );

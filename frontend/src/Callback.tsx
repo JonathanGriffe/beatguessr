@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { successOrRedirect } from './utils/utils';
+import { get } from './utils/utils';
 import { useNavigate } from 'react-router';
 
 function Callback() {
@@ -11,13 +11,7 @@ function Callback() {
             
         if (code) {
             // Exchange the authorization code for an access token
-            fetch(`/api/accounts/callback/?code=${code}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            }).then(successOrRedirect(navigate)).then(res => res.json()).then(() => {
+            get(`/api/accounts/callback/?code=${code}`, navigate, {'Content-Type': 'application/json'}).then(res => res.json()).then(() => {
                 navigate('/');
             });
         }

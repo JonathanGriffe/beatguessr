@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import GuessInput from './GuessInput';
-import { successOrRedirect } from './utils/utils';
+import { get, post } from './utils/utils';
 import { useNavigate } from 'react-router';
+import './WebPlayback.css';
+import TrackCard from './TrackCard';
+import type { Track } from './lib/types';
 
 declare global {
   interface Window {
@@ -10,16 +13,10 @@ declare global {
   }
 }
 
-function getCookie(name: string) {
-  const parts = document.cookie.split(`${name}=`);
-  if (parts.length === 2) {
-    const part = parts.pop();
-    return part ? part.split(';').shift() : undefined;
-  }
-  return undefined;
-}
+const ROUND_SEPARATION_TIMER = 5000
 
-function WebPlayback(props: { token: string }) {
+
+function WebPlayback() {
     const navigate = useNavigate();
 
     const [player, setPlayer] = useState(undefined);
@@ -29,50 +26,71 @@ function WebPlayback(props: { token: string }) {
     const timeoutRef: { current: number | undefined } = React.useRef(undefined);
     const deviceId = React.useRef<string | null>(null);
 
+    const [timerLength, setTimerLength] = useState<number>(0);
+    const [track, setTrack] = useState<Track | undefined>(undefined);
+
+    const labelColor = answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black';
+
     const changeTrack = () => {
         setText("");
-        fetch(`/api/quiz/question/?device_id=${deviceId.current}`, {
-            method: 'GET',
-            credentials: 'include',
-        }).then(successOrRedirect(navigate)).catch(err => console.error(err)).then(res => res.json())
-          .then(data => {
+        get(`/api/quiz/question/?device_id=${deviceId.current}`, navigate).then(res => res.json()).then(data => {
             setQuestionId(data.question_id);
             clearTimeout(timeoutRef.current);
-            timeoutRef.current = setTimeout(changeTrack, data.timer_ms);
+            timeoutRef.current = setTimeout(() => roundTimeout(data.question_id), data.timer_ms);
+            setTimerLength(data.timer_ms)
           });
     };
 
+    const refresh = (cb: (token: string) => void) => {
+      get(`/api/accounts/refresh/`, navigate).then(res => res.json())
+        .then(data => cb(data.access_token))
+    }
 
     const sendResponse = (text: string) => {
-        const requestHeaders: HeadersInit = new Headers();
-        requestHeaders.set('Content-Type', 'application/json');
-        const cookie = getCookie('csrftoken');
-        if (!cookie) {
-            console.error("No CSRF token found in cookies");
-            return;
-        }
-        requestHeaders.set('X-CSRFToken', cookie);
-        fetch('/api/quiz/answer/', {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify({
+      if (!questionId) {
+        console.error("No question ID set");
+        return;
+      }
+      if (text.length === 0) {
+        return;
+      }
+        post('/api/quiz/answer/', navigate, {'Content-Type': 'application/json'}, 
+            {
                 question_id: questionId,
                 text: text,
-            }),
-            headers: requestHeaders,
-        }).then(successOrRedirect(navigate)).then(res => res.json())
+            },
+        ).then(res => res.json())
           .then(data => {
             let status: 'correct' | 'wrong' = data.is_correct ? "correct" : "wrong";
             setAnswerStatus(status);
             setTimeout(() => setAnswerStatus('default'), 3000);
             if (data.is_correct) {
-                setText("");
-                changeTrack();
+                endRound(data.song);
             }
-        }).catch(err => console.error(err));
+        });
 
 
     }
+
+    const roundTimeout = (questionId: string) => {
+      post('/api/quiz/answer/', navigate, {'Content-Type': 'application/json'}, 
+            {
+                question_id: questionId,
+            },
+        ).then(res => res.json()).then(data => {
+          endRound(data.song);
+        })
+    }
+    const endRound = (track: Track) => {
+      setTrack(track);
+      setQuestionId(null);
+      setTimerLength(ROUND_SEPARATION_TIMER);
+      setTimeout(() => {
+        setTrack(undefined);
+        changeTrack();
+      }, ROUND_SEPARATION_TIMER);
+    }
+
     useEffect(() => {
 
         const script = document.createElement("script");
@@ -85,7 +103,7 @@ function WebPlayback(props: { token: string }) {
 
             const player = new window.Spotify.Player({
                 name: 'Web Playback SDK',
-                getOAuthToken: (cb: (token: string) => void): void => { cb(props.token); },
+                getOAuthToken: (cb: (token: string) => void): void => { (refresh(cb)); },
                 volume: 0.5
             });
 
@@ -107,15 +125,19 @@ function WebPlayback(props: { token: string }) {
     }, []);
 
    return (
-      <>
-        <div className="container">
-            <GuessInput value={text} onChange={(e) => setText(e.target.value)} status={answerStatus} onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                    sendResponse(text);
-                }
-            }} />
-        </div>
-      </>
+      <div className="flex flex-col w-full items-center m-20 gap-6">
+        <TrackCard track={track} timerLength={timerLength / 1000}/>
+        <div className="w-full">
+          <div className="h-3 w-full rounded overflow-hidden">
+            {questionId ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div>: ''}
+          </div>
+          <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={labelColor} onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                  sendResponse(text);
+              }
+          }} />
+          </div>
+      </div>
     );
 }
 

@@ -7,4 +7,6 @@ class UserView(APIView):
 
     def get(self, request):
         user = request.user
-        return JsonResponse({"name": user.name})
+        question_count = user.questions.count()
+        song_count = user.questions.distinct('song').count()
+        return JsonResponse({"name": user.name, "question_count": question_count, "song_count": song_count})
