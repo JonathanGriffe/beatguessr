@@ -35,5 +35,5 @@ class CallbackView(APIView):
         user.save()
 
         login(request, user)
-    
-        return JsonResponse({'message': 'Logged in successfully'})
+
+        return JsonResponse({'message': 'Logged in successfully', 'access_token': access_token})

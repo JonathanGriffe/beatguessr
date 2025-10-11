@@ -3,24 +3,31 @@ import GuessInput from './GuessInput';
 import { successOrRedirect } from './utils/utils';
 import { useNavigate } from 'react-router';
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;      // add a leading `; ` to make splitting easier
-  const parts = value.split(`; ${name}=`);  // split on the cookie name
-  if (parts.length === 2) {
-    return parts.pop().split(';').shift();  // get the value before the next `;`
+declare global {
+  interface Window {
+    onSpotifyWebPlaybackSDKReady?: () => void;
+    Spotify: any;
   }
-  return null;  // cookie not found
 }
 
-function WebPlayback(props) {
+function getCookie(name: string) {
+  const parts = document.cookie.split(`${name}=`);
+  if (parts.length === 2) {
+    const part = parts.pop();
+    return part ? part.split(';').shift() : undefined;
+  }
+  return undefined;
+}
+
+function WebPlayback(props: { token: string }) {
     const navigate = useNavigate();
 
     const [player, setPlayer] = useState(undefined);
-    const [questionId, setQuestionId] = useState(null);
+    const [questionId, setQuestionId] = useState<string | null>(null);
     const [text, setText] = useState("");
-    const [answerStatus, setAnswerStatus] = useState(null);
-    const timeoutRef = React.useRef(null);
-    const deviceId = React.useRef(null);
+    const [answerStatus, setAnswerStatus] = useState<'default' | 'correct' | 'wrong'>('default');
+    const timeoutRef: { current: number | undefined } = React.useRef(undefined);
+    const deviceId = React.useRef<string | null>(null);
 
     const changeTrack = () => {
         setText("");
@@ -36,7 +43,15 @@ function WebPlayback(props) {
     };
 
 
-    const sendResponse = (text) => {
+    const sendResponse = (text: string) => {
+        const requestHeaders: HeadersInit = new Headers();
+        requestHeaders.set('Content-Type', 'application/json');
+        const cookie = getCookie('csrftoken');
+        if (!cookie) {
+            console.error("No CSRF token found in cookies");
+            return;
+        }
+        requestHeaders.set('X-CSRFToken', cookie);
         fetch('/api/quiz/answer/', {
             method: 'POST',
             credentials: 'include',
@@ -44,15 +59,12 @@ function WebPlayback(props) {
                 question_id: questionId,
                 text: text,
             }),
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken'),
-            },
+            headers: requestHeaders,
         }).then(successOrRedirect(navigate)).then(res => res.json())
           .then(data => {
-            let status = data.is_correct ? "correct" : "wrong";
+            let status: 'correct' | 'wrong' = data.is_correct ? "correct" : "wrong";
             setAnswerStatus(status);
-            setTimeout(() => setAnswerStatus(null), 3000);
+            setTimeout(() => setAnswerStatus('default'), 3000);
             if (data.is_correct) {
                 setText("");
                 changeTrack();
@@ -73,19 +85,19 @@ function WebPlayback(props) {
 
             const player = new window.Spotify.Player({
                 name: 'Web Playback SDK',
-                getOAuthToken: cb => { cb(props.token); },
+                getOAuthToken: (cb: (token: string) => void): void => { cb(props.token); },
                 volume: 0.5
             });
 
             setPlayer(player);
 
-            player.addListener('ready', ({ device_id }) => {
+            player.addListener('ready', ({ device_id }: { device_id: string }) => {
                 console.log('Ready with Device ID', device_id);
                 deviceId.current = device_id;
                 changeTrack();
             });
 
-            player.addListener('not_ready', ({ device_id }) => {
+            player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
                 console.log('Device ID has gone offline', device_id);
             });
 

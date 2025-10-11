@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import './Callback.css';
 import { successOrRedirect } from './utils/utils';
 import { useNavigate } from 'react-router';
 

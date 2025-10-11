@@ -20,7 +20,7 @@ SECRET_KEY = 'django-insecure-g^=wnppw^xf&sg7cwt^cu5ne+$9o+wt@x&cy0u3612rx64ktls
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.environ['DJANGO_APP_HOST']]
 
 
 # Application definition
@@ -34,7 +34,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'accounts'
+    'accounts',
+    'quiz',
 ]
 
 MIDDLEWARE = [
@@ -50,11 +51,13 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     os.environ['FRONTEND_URL'],
-    os.environ['DJANGO_APP_URL'],
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
+CSRF_TRUSTED_ORIGINS = [
+    os.environ['FRONTEND_URL'],
+]
 
 ROOT_URLCONF = 'core.urls'
 
