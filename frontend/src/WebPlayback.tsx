@@ -28,16 +28,20 @@ function WebPlayback() {
 
     const [timerLength, setTimerLength] = useState<number>(0);
     const [track, setTrack] = useState<Track | undefined>(undefined);
+    const [timer, setTimer] = useState<number>(0);
+    const timerId = React.useRef<number | undefined>(undefined);
 
     const labelColor = answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black';
 
     const changeTrack = () => {
         setText("");
+        setTrack(undefined);
         get(`/api/quiz/question/?device_id=${deviceId.current}`, navigate).then(res => res.json()).then(data => {
             setQuestionId(data.question_id);
             clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => roundTimeout(data.question_id), data.timer_ms);
-            setTimerLength(data.timer_ms)
+            setTimerLength(data.timer_ms);
+            startTimer(data.timer_ms);
           });
     };
 
@@ -72,6 +76,19 @@ function WebPlayback() {
 
     }
 
+    const startTimer = (duration: number) => {
+      setTimer(duration / 1000);
+      timerId.current = setInterval(() => {
+        setTimer((prev) => {
+          if (prev > 0) {
+            return prev - 1;
+          }
+          clearInterval(timerId.current);
+          return 0;
+        });
+      }, 1000);
+    }
+
     const roundTimeout = (questionId: string) => {
       post('/api/quiz/answer/', navigate, {'Content-Type': 'application/json'}, 
             {
@@ -84,9 +101,8 @@ function WebPlayback() {
     const endRound = (track: Track) => {
       setTrack(track);
       setQuestionId(null);
-      setTimerLength(ROUND_SEPARATION_TIMER);
+      startTimer(ROUND_SEPARATION_TIMER);
       setTimeout(() => {
-        setTrack(undefined);
         changeTrack();
       }, ROUND_SEPARATION_TIMER);
     }
@@ -126,7 +142,11 @@ function WebPlayback() {
 
    return (
       <div className="flex flex-col w-full items-center m-20 gap-6">
-        <TrackCard track={track} timerLength={timerLength / 1000}/>
+        <TrackCard track={track}/>
+        <div className="flex flex-col items-center h-1/3">
+              <p>{questionId ? "Next round in" : "Rounds ends in"}</p>
+              <p className="text-greenblue font-bold text-4xl">{timer}</p>
+          </div>
         <div className="w-full">
           <div className="h-3 w-full rounded overflow-hidden">
             {questionId ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div>: ''}
