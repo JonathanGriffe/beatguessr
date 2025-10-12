@@ -33,7 +33,20 @@ def normalize(text):
     
 def check_answer(question, answer):
     if not question or not answer:
-        return False
+        return False, False
     if timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
-        return False
-    return levenshtein(normalize(question.song.title), normalize(answer)) <= 2
+        return False, False
+    
+    normalized_answer = normalize(answer)
+    normalized_title = normalize(question.song.title)
+    normalized_artist = normalize(question.song.artist)
+
+    if min(
+        levenshtein(f"{normalized_title} {normalized_artist}", normalized_answer),
+        levenshtein(f"{normalized_artist} {normalized_title}", normalized_answer)
+    ) < 3:
+        return True, True
+    return (
+        levenshtein(normalized_title, normalized_answer) <= 2,
+        levenshtein(normalized_artist, normalized_answer) <= 1
+    )

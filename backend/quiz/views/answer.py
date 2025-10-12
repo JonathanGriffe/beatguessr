@@ -21,13 +21,18 @@ class AnswerView(APIView):
         except ObjectDoesNotExist:
             return JsonResponse({"error": "Question not found"}, status=404)
 
-        is_correct = check_answer(question, answer) if answer else False
+        is_title_correct, is_artist_correct = check_answer(question, answer) if answer else (False, False)
 
-        if is_correct:
-            question.answered_correctly = True
-            question.save()
+        is_title_correct = is_title_correct or question.title_found
+        is_artist_correct = is_artist_correct or question.artist_found
+        is_correct = is_title_correct and is_artist_correct
+
+        question.answered_correctly = is_correct
+        question.title_found = is_title_correct
+        question.artist_found = is_artist_correct
+        question.save()
         
-        resp = {"is_correct": is_correct}
+        resp = {"is_title_correct": is_title_correct, "is_artist_correct": is_artist_correct}
 
         if is_correct or timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
             resp["song"] = {
@@ -35,4 +40,11 @@ class AnswerView(APIView):
                 "artist": question.song.artist,
                 "image_link": question.song.image_link
             }
+        elif is_title_correct or is_artist_correct:
+            resp["song"] = {}
+            if is_title_correct:
+                resp["song"]["title"] = question.song.title
+            if is_artist_correct:
+                resp["song"]["artist"] = question.song.artist
+
         return JsonResponse(resp)

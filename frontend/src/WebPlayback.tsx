@@ -58,17 +58,17 @@ function WebPlayback() {
       if (text.length === 0) {
         return;
       }
-        post('/api/quiz/answer/', navigate, {'Content-Type': 'application/json'}, 
+        post('/api/quiz/answer/', navigate, {'Content-Type': 'application/json'},
             {
                 question_id: questionId,
                 text: text,
             },
         ).then(res => res.json())
           .then(data => {
-            let status: 'correct' | 'wrong' = data.is_correct ? "correct" : "wrong";
+            let status: 'correct' | 'wrong' = data.is_artist_correct || data.is_title_correct ? "correct" : "wrong";
             setAnswerStatus(status);
             setTimeout(() => setAnswerStatus('default'), 3000);
-            if (data.is_correct) {
+            if (data.is_artist_correct && data.is_title_correct) {
                 endRound(data.song);
             }
         });
@@ -78,12 +78,12 @@ function WebPlayback() {
 
     const startTimer = (duration: number) => {
       setTimer(duration / 1000);
+      clearInterval(timerId.current);
       timerId.current = setInterval(() => {
         setTimer((prev) => {
           if (prev > 0) {
             return prev - 1;
           }
-          clearInterval(timerId.current);
           return 0;
         });
       }, 1000);
