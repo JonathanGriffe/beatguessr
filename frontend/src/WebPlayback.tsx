@@ -27,7 +27,7 @@ function WebPlayback() {
     const deviceId = React.useRef<string | null>(null);
 
     const [timerLength, setTimerLength] = useState<number>(0);
-    const [track, setTrack] = useState<Track | undefined>(undefined);
+    const [track, setTrack] = useState<Track>({});
     const [timer, setTimer] = useState<number>(0);
     const timerId = React.useRef<number | undefined>(undefined);
 
@@ -35,7 +35,7 @@ function WebPlayback() {
 
     const changeTrack = () => {
         setText("");
-        setTrack(undefined);
+        setTrack({});
         get(`/api/quiz/question/?device_id=${deviceId.current}`, navigate).then(res => res.json()).then(data => {
             setQuestionId(data.question_id);
             clearTimeout(timeoutRef.current);
@@ -70,6 +70,8 @@ function WebPlayback() {
             setTimeout(() => setAnswerStatus('default'), 3000);
             if (data.is_artist_correct && data.is_title_correct) {
                 endRound(data.song);
+            } else {
+              setTrack(data.song || {});
             }
         });
 
