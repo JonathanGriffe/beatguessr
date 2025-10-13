@@ -5,6 +5,7 @@ import Login from './Login';
 import Callback from './Callback';
 import { BrowserRouter, Routes, Route } from 'react-router';
 import Quiz from './Quiz';
+import Header from './Header';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -13,6 +14,7 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <BrowserRouter>
+    <Header/>
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/login" element={<Login />} />

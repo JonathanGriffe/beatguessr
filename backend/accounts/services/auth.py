@@ -4,6 +4,7 @@ from functools import partial
 import os
 from django.utils import timezone
 import requests
+from django.core.cache import cache
 
 from rest_framework.exceptions import NotAuthenticated
 
@@ -37,13 +38,36 @@ def refresh_access_token(user):
     user.save()
     return user.access_token
 
-def request(method, user, url, headers=None, **kwargs):
-    access_token = user.access_token
-    if not access_token:
-        raise NotAuthenticated("User is not authenticated with Spotify")
+def get_client_token():
+    response = requests.post(
+        'https://accounts.spotify.com/api/token',
+        data={'grant_type': 'client_credentials'},
+        headers={'Authorization': f'Basic {get_auth_header()}'}
+    )
 
-    if timezone.now() >= user.token_expires:
-        access_token = refresh_access_token(user)
+    if response.status_code != 200:
+        raise NotAuthenticated("Failed to get client token")
+    
+    data = response.json()
+    client_token = data['access_token']
+    cache.set('service_access_token', client_token, data['expires_in'])
+
+    return client_token
+
+def request(method, url, user=None, headers=None, **kwargs):
+    if user is not None:
+        access_token = user.access_token
+        if not access_token:
+            raise NotAuthenticated("User is not authenticated with Spotify")
+
+        if timezone.now() >= user.token_expires:
+            access_token = refresh_access_token(user)
+    else:
+        access_token = cache.get('service_access_token')
+        if not access_token:
+            access_token = get_client_token()
+
+
 
     headers = headers or {}
     headers["Authorization"] = f"Bearer {access_token}"
@@ -51,7 +75,10 @@ def request(method, user, url, headers=None, **kwargs):
     response = requests.request(method, url, headers=headers, **kwargs)
 
     if response.status_code == 401:
-        access_token = refresh_access_token(user)
+        if user:
+            access_token = refresh_access_token(user)
+        else:
+            access_token = get_client_token()
 
         headers["Authorization"] = f"Bearer {user.access_token}"
         response = requests.request(method, url, headers=headers, **kwargs)

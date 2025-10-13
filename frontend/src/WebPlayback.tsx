@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import GuessInput from './GuessInput';
 import { get, post } from './utils/utils';
 import { useNavigate } from 'react-router';
@@ -16,27 +16,30 @@ declare global {
 const ROUND_SEPARATION_TIMER = 5000
 
 
-function WebPlayback() {
+function WebPlayback(props: { playlist_id: string | null }) {
     const navigate = useNavigate();
 
-    const [player, setPlayer] = useState(undefined);
+    const player = useRef<any>(undefined);
     const [questionId, setQuestionId] = useState<string | null>(null);
     const [text, setText] = useState("");
     const [answerStatus, setAnswerStatus] = useState<'default' | 'correct' | 'wrong'>('default');
-    const timeoutRef: { current: number | undefined } = React.useRef(undefined);
-    const deviceId = React.useRef<string | null>(null);
+    const timeoutRef: { current: number | undefined } = useRef(undefined);
+    const deviceId = useRef<string | null>(null);
 
     const [timerLength, setTimerLength] = useState<number>(0);
     const [track, setTrack] = useState<Track>({});
     const [timer, setTimer] = useState<number>(0);
-    const timerId = React.useRef<number | undefined>(undefined);
+    const timerId = useRef<number | undefined>(undefined);
 
     const labelColor = answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black';
 
     const changeTrack = () => {
+      if (props.playlist_id === null) {
+        return
+      }
         setText("");
         setTrack({});
-        get(`/api/quiz/question/?device_id=${deviceId.current}`, navigate).then(res => res.json()).then(data => {
+        get(`/api/quiz/question/?device_id=${deviceId.current}&playlist_id=${props.playlist_id}`, navigate).then(res => res.json()).then(data => {
             setQuestionId(data.question_id);
             clearTimeout(timeoutRef.current);
             timeoutRef.current = setTimeout(() => roundTimeout(data.question_id), data.timer_ms);
@@ -119,27 +122,35 @@ function WebPlayback() {
 
         window.onSpotifyWebPlaybackSDKReady = () => {
 
-            const player = new window.Spotify.Player({
+            const spotifyPlayer = new window.Spotify.Player({
                 name: 'Web Playback SDK',
                 getOAuthToken: (cb: (token: string) => void): void => { (refresh(cb)); },
                 volume: 0.5
             });
 
-            setPlayer(player);
 
-            player.addListener('ready', ({ device_id }: { device_id: string }) => {
+            spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
                 console.log('Ready with Device ID', device_id);
                 deviceId.current = device_id;
                 changeTrack();
             });
 
-            player.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+            spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
                 console.log('Device ID has gone offline', device_id);
             });
 
+            spotifyPlayer.connect();
 
-            player.connect();
+            player.current = spotifyPlayer;
+
         };
+        return () => {
+          console.log("END !")
+          if (player.current !== undefined) {
+            console.log("Disconnecting player");
+            player.current.disconnect();
+          }
+        }
     }, []);
 
    return (
