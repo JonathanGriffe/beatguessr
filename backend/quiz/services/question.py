@@ -1,5 +1,4 @@
 from collections import defaultdict
-import random
 from accounts.services.auth import put
 from quiz.models.playlist import Playlist
 from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, RESPONSE_TIMER, WEIGHTS
@@ -30,7 +29,7 @@ def compute_activations(user, playlist):
 
 def pick_song(activation_by_song, playlist):
     activations = list(activation_by_song.values())
-    lowest_activation = min(activations)
+    lowest_activation = min(activations or [0])
     logger.info(f"Lowest activation: {lowest_activation}")
     practice_range_activations = [activation for activation in activations if activation > PRACTICE_THRESHOLD and activation < LEARNED_THRESHOLD]
 
@@ -41,9 +40,7 @@ def pick_song(activation_by_song, playlist):
         logger.info(f"Selecting song {song.title} with activation {selected_activation}")
         return song_id
     
-    songs_count = playlist.songs.exclude(id__in=activation_by_song.keys()).count()
-    song_number = random.randint(0, songs_count - 1)
-    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).all()[song_number].id
+    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by('-popularity').first().id
     song = playlist.songs.get(id=song_id)
     logger.info(f"Selecting new song {song.title}")
     return song_id

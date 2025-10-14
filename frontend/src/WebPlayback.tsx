@@ -19,7 +19,6 @@ const ROUND_SEPARATION_TIMER = 5000
 function WebPlayback(props: { playlist_id: string | null }) {
     const navigate = useNavigate();
 
-    const player = useRef<any>(undefined);
     const [questionId, setQuestionId] = useState<string | null>(null);
     const [text, setText] = useState("");
     const [answerStatus, setAnswerStatus] = useState<'default' | 'correct' | 'wrong'>('default');
@@ -30,10 +29,12 @@ function WebPlayback(props: { playlist_id: string | null }) {
     const [track, setTrack] = useState<Track>({});
     const [timer, setTimer] = useState<number>(0);
     const timerId = useRef<number | undefined>(undefined);
+    const player = useRef<any>(null);
 
     const labelColor = answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black';
 
     const changeTrack = () => {
+      console.log("change track !")
       if (props.playlist_id === null) {
         return
       }
@@ -107,50 +108,69 @@ function WebPlayback(props: { playlist_id: string | null }) {
       setTrack(track);
       setQuestionId(null);
       startTimer(ROUND_SEPARATION_TIMER);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         changeTrack();
       }, ROUND_SEPARATION_TIMER);
     }
 
     useEffect(() => {
+      let script: HTMLScriptElement | null = null;
 
-        const script = document.createElement("script");
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.async = true;
+      const initSpotifyPlayer = async () => {
+        if (!window.Spotify) {
+          console.log("adding script");
+          script = document.createElement("script");
+          script.src = "https://sdk.scdn.co/spotify-player.js";
+          script.async = true;
 
-        document.body.appendChild(script);
-
-        window.onSpotifyWebPlaybackSDKReady = () => {
-
-            const spotifyPlayer = new window.Spotify.Player({
-                name: 'Web Playback SDK',
-                getOAuthToken: (cb: (token: string) => void): void => { (refresh(cb)); },
-                volume: 0.5
-            });
-
-
-            spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
-                console.log('Ready with Device ID', device_id);
-                deviceId.current = device_id;
-                changeTrack();
-            });
-
-            spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-                console.log('Device ID has gone offline', device_id);
-            });
-
-            spotifyPlayer.connect();
-
-            player.current = spotifyPlayer;
-
-        };
-        return () => {
-          console.log("END !")
-          if (player.current !== undefined) {
-            console.log("Disconnecting player");
-            player.current.disconnect();
-          }
+          document.body.appendChild(script);
         }
+
+        await new Promise<void>(resolve => {
+          if (window.Spotify) return resolve();
+          window.onSpotifyWebPlaybackSDKReady = resolve;
+        })
+
+        const spotifyPlayer = new window.Spotify.Player({
+            name: 'Web Playback SDK',
+            getOAuthToken: (cb: (token: string) => void): void => { (refresh(cb)); },
+            volume: 0.5
+        });
+
+        player.current = spotifyPlayer;
+
+
+        spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
+            console.log('Ready with Device ID', device_id);
+            deviceId.current = device_id;
+            changeTrack();
+        });
+
+        spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+            console.log('Device ID has gone offline', device_id);
+        });
+
+        spotifyPlayer.connect();
+
+      }
+
+      initSpotifyPlayer();
+
+      return () => {
+        console.log("END !")
+        if (player.current) {
+          player.current.disconnect();
+          player.current.removeListener('ready');
+          player.current.removeListener('not_ready');
+        }
+
+        if (script) {
+          script.parentNode?.removeChild(script);
+        }
+        delete player.current;
+        delete window.Spotify;
+        delete window.onSpotifyWebPlaybackSDKReady;
+      }
     }, []);
 
    return (

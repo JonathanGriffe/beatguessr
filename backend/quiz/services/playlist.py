@@ -7,7 +7,7 @@ from quiz.models.song import Song
 
 def get_items(playlist_id):
     market = os.environ['MARKET']
-    item_fields = 'next,items(track(name,id,artists(name),album(images(url))))'
+    item_fields = 'next,items(track(name,id,popularity,artists(name),album(images(url))))'
     fields = f'name, images(url),tracks({item_fields})'
     data = get(f'https://api.spotify.com/v1/playlists/{playlist_id}?market={market}&fields={fields}').json()
     tracks = [item["track"] for item in data['tracks']['items']]
@@ -35,6 +35,7 @@ def import_playlist(playlist_id, category):
                 'title': track['name'],
                 'artist': track['artists'][0]['name'],
                 'image_link': track['album']['images'][0]['url'],
+                'popularity': track['popularity'],
             }
         )
         song_ids.append(song.id)
