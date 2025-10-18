@@ -2,7 +2,7 @@ import './Login.css';
 import { Button } from './components/ui/button';
 
 function Login() {
-  const scopes = 'user-read-playback-state user-modify-playback-state user-library-read streaming user-read-email user-read-private';
+  const scopes = 'user-read-playback-state user-modify-playback-state user-library-read user-library-modify streaming user-read-email user-read-private playlist-read-private playlist-modify-public playlist-modify-private';
   return (
     <div className="flex items-center justify-center min-h-screen">
       <Button className="bg-corange" onClick={() => {

@@ -38,7 +38,8 @@ class AnswerView(APIView):
             resp["song"] = {
                 "title": question.song.title,
                 "artist": question.song.artist,
-                "image_link": question.song.image_link
+                "image_link": question.song.image_link,
+                "spotify_id": question.song.spotify_id
             }
         elif is_title_correct or is_artist_correct:
             resp["song"] = {}
