@@ -14,6 +14,9 @@ superuser:
 down:
 	docker compose down
 
+test:
+	docker compose exec backend pytest $(file)
+
 # Start production
 up-prod:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build

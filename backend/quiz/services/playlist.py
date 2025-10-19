@@ -15,13 +15,14 @@ def get_items(playlist_id):
     name = data['name']
 
     next_url = data['tracks']['next']
-    next_url = f"{next_url.split('fields=')[0]}fields={item_fields}"
-    while next_url:
-        response = get(next_url)
-        data = response.json()
-        for track in data['items']:
-            tracks.append(track["track"])
-        next_url = data['next']
+    if next_url:
+        next_url = f"{next_url.split('fields=')[0]}fields={item_fields}"
+        while next_url:
+            response = get(next_url)
+            data = response.json()
+            for track in data['items']:
+                tracks.append(track["track"])
+            next_url = data['next']
 
     return name, image_link, tracks
 

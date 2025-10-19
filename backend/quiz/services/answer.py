@@ -44,9 +44,9 @@ def check_answer(question, answer):
     if min(
         levenshtein(f"{normalized_title} {normalized_artist}", normalized_answer),
         levenshtein(f"{normalized_artist} {normalized_title}", normalized_answer)
-    ) < 3:
+    ) < 2:
         return True, True
     return (
-        levenshtein(normalized_title, normalized_answer) <= 2,
+        levenshtein(normalized_title, normalized_answer) <= 1,
         levenshtein(normalized_artist, normalized_answer) <= 1
     )
