@@ -15,23 +15,30 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Song',
+            name="Song",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=200)),
-                ('artist', models.CharField(max_length=200)),
-                ('image_link', models.URLField(max_length=500)),
-                ('spotify_id', models.CharField(max_length=500, unique=True)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("title", models.CharField(max_length=200)),
+                ("artist", models.CharField(max_length=200)),
+                ("image_link", models.URLField(max_length=500)),
+                ("spotify_id", models.CharField(max_length=500, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Question',
+            name="Question",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('answered_correctly', models.BooleanField(default=False)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='questions', to=settings.AUTH_USER_MODEL)),
-                ('song', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quiz.song')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("answered_correctly", models.BooleanField(default=False)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="questions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("song", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="quiz.song")),
             ],
         ),
     ]

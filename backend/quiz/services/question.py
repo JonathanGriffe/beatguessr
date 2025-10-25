@@ -1,28 +1,33 @@
+import logging
 from collections import defaultdict
+
+import numpy as np
 from accounts.services.auth import put
-from quiz.models.playlist import Playlist
-from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, RESPONSE_TIMER, WEIGHTS
-from quiz.models import Question
-from django.utils import timezone
 from django.db.models.expressions import Window
 from django.db.models.functions import RowNumber
-import numpy as np
-import logging
+from django.utils import timezone
+from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, RESPONSE_TIMER, WEIGHTS
+from quiz.models import Question
+from quiz.models.playlist import Playlist
 
 logger = logging.getLogger(__name__)
 
 
 def compute_activations(user, playlist):
-    questions = Question.objects.filter(user=user, song__in=playlist.songs.all()).order_by('created_at').annotate(position=Window(expression=RowNumber(), order_by='-created_at')).values('song_id', 'created_at', 'answered_correctly', 'position')
+    questions = (
+        Question.objects.filter(user=user, song__in=playlist.songs.all())
+        .order_by("created_at")
+        .annotate(position=Window(expression=RowNumber(), order_by="-created_at"))
+        .values("song_id", "created_at", "answered_correctly", "position")
+    )
 
     qs_by_song = defaultdict(list)
     for question in questions:
-        qs_by_song[question['song_id']].append(question)
+        qs_by_song[question["song_id"]].append(question)
 
     activation_by_song = {}
     for song_id, qs in qs_by_song.items():
         activation_by_song[song_id] = song_activation(qs)
-
 
     return activation_by_song
 
@@ -31,19 +36,24 @@ def pick_song(activation_by_song, playlist):
     activations = list(activation_by_song.values())
     lowest_activation = min(activations or [0])
     logger.info(f"Lowest activation: {lowest_activation}")
-    practice_range_activations = [activation for activation in activations if activation > PRACTICE_THRESHOLD and activation < LEARNED_THRESHOLD]
+    practice_range_activations = [
+        activation for activation in activations if activation > PRACTICE_THRESHOLD and activation < LEARNED_THRESHOLD
+    ]
 
     if practice_range_activations:
         selected_activation = min(practice_range_activations)
-        song_id = next(song_id for song_id, activation in activation_by_song.items() if activation == selected_activation)
+        song_id = next(
+            song_id for song_id, activation in activation_by_song.items() if activation == selected_activation
+        )
         song = playlist.songs.get(id=song_id)
         logger.info(f"Selecting song {song.title} with activation {selected_activation}")
         return song_id
-    
-    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by('-popularity').first().id
+
+    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
     song = playlist.songs.get(id=song_id)
     logger.info(f"Selecting new song {song.title}")
     return song_id
+
 
 def song_activation(questions):
     wins = 0
@@ -54,7 +64,7 @@ def song_activation(questions):
 
     latest_question = None
     for question in questions:
-        if question['answered_correctly']:
+        if question["answered_correctly"]:
             wins += 1
             loss_streak = 0
             win_streak += 1
@@ -68,13 +78,12 @@ def song_activation(questions):
 
     features = np.array([wins, losses, win_streak, loss_streak, max_win_streak])
     weights = np.array(WEIGHTS)
-    half_life = 2**max(MIN_HALF_LIFE, features @ weights)
+    half_life = 2 ** max(MIN_HALF_LIFE, features @ weights)
 
-
-
-    adjusted_time = (timezone.now() - latest_question['created_at']).total_seconds() / 86400 + latest_question['position'] / 100
-    return 2 ** (- adjusted_time / half_life)
-
+    adjusted_time = (timezone.now() - latest_question["created_at"]).total_seconds() / 86400 + latest_question[
+        "position"
+    ] / 100
+    return 2 ** (-adjusted_time / half_life)
 
 
 def generate_question(user, device_id, playlist_id):
@@ -86,10 +95,14 @@ def generate_question(user, device_id, playlist_id):
 
     question = Question.objects.create(song_id=song_id, user=user)
 
-    put(f'https://api.spotify.com/v1/me/player/play?device_id={device_id}', user, json={
-        'uris': [f'spotify:track:{question.song.spotify_id}'],
-        'position_ms': 0,
-    })
+    put(
+        f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
+        user,
+        json={
+            "uris": [f"spotify:track:{question.song.spotify_id}"],
+            "position_ms": 0,
+        },
+    )
 
     return {
         "question_id": question.id,

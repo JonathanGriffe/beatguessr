@@ -1,12 +1,14 @@
 from datetime import timedelta
-from django.http import JsonResponse
-from quiz.constants import RESPONSE_TIMER
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
+from django.utils import timezone
+from quiz.constants import RESPONSE_TIMER
 from quiz.models.question import Question
 from quiz.services.answer import check_answer
-from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
 
 class AnswerView(APIView):
     permission_classes = [IsAuthenticated]
@@ -31,15 +33,18 @@ class AnswerView(APIView):
         question.title_found = is_title_correct
         question.artist_found = is_artist_correct
         question.save()
-        
-        resp = {"is_title_correct": is_title_correct, "is_artist_correct": is_artist_correct}
+
+        resp = {
+            "is_title_correct": is_title_correct,
+            "is_artist_correct": is_artist_correct,
+        }
 
         if is_correct or timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
             resp["song"] = {
                 "title": question.song.title,
                 "artist": question.song.artist,
                 "image_link": question.song.image_link,
-                "spotify_id": question.song.spotify_id
+                "spotify_id": question.song.spotify_id,
             }
         elif is_title_correct or is_artist_correct:
             resp["song"] = {}

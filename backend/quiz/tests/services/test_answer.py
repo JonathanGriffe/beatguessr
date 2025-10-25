@@ -1,8 +1,8 @@
 from accounts.models import CustomUser
-from quiz.models.song import Song
-from quiz.models.question import Question
-from quiz.services.answer import check_answer
 from django.utils import timezone
+from quiz.models.question import Question
+from quiz.models.song import Song
+from quiz.services.answer import check_answer
 
 
 def create_question(title, artist):
@@ -22,6 +22,7 @@ def test_check_answer_title():
     assert check_answer(question, "titlee") == (True, False)
     assert check_answer(question, "titleee") == (False, False)
 
+
 def test_check_answer_artist():
     question = create_question("title", "artist")
 
@@ -29,11 +30,13 @@ def test_check_answer_artist():
     assert check_answer(question, "artis") == (False, True)
     assert check_answer(question, "artist") == (False, True)
 
+
 def test_check_answer_both():
     question = create_question("title", "artist")
     assert check_answer(question, "title artist") == (True, True)
 
     assert check_answer(question, "artist title") == (True, True)
+
 
 def test_check_answer_normalization():
     question_special_char = create_question("title$", "artist_")

@@ -6,19 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('quiz', '0002_question_artist_found_question_title_found'),
+        ("quiz", "0002_question_artist_found_question_title_found"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Playlist',
+            name="Playlist",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('spotify_id', models.CharField(max_length=200, unique=True)),
-                ('title', models.CharField(max_length=200)),
-                ('image_link', models.URLField(max_length=500)),
-                ('category', models.CharField(max_length=200)),
-                ('songs', models.ManyToManyField(to='quiz.song')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("spotify_id", models.CharField(max_length=200, unique=True)),
+                ("title", models.CharField(max_length=200)),
+                ("image_link", models.URLField(max_length=500)),
+                ("category", models.CharField(max_length=200)),
+                ("songs", models.ManyToManyField(to="quiz.song")),
             ],
         ),
     ]

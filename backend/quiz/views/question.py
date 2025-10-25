@@ -1,8 +1,7 @@
 from django.http import JsonResponse
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-
 from quiz.services.question import generate_question
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 
 class QuestionView(APIView):
@@ -14,7 +13,7 @@ class QuestionView(APIView):
         device_id = request.query_params.get("device_id")
         if not device_id:
             return JsonResponse({"error": "Device ID is required"}, status=400)
-        
+
         if not playlist_id:
             return JsonResponse({"error": "Playlist is required"}, status=400)
 

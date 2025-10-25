@@ -1,8 +1,9 @@
-from django.http import JsonResponse
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
 from accounts.services.auth import refresh_access_token
+from django.http import JsonResponse
+from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
 
 class RefreshView(APIView):
     permission_classes = [IsAuthenticated]

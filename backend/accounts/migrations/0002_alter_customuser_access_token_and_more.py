@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='customuser',
-            name='access_token',
+            model_name="customuser",
+            name="access_token",
             field=models.CharField(blank=True, max_length=1024, null=True),
         ),
         migrations.AlterField(
-            model_name='customuser',
-            name='refresh_token',
+            model_name="customuser",
+            name="refresh_token",
             field=models.CharField(blank=True, max_length=1024, null=True),
         ),
     ]
