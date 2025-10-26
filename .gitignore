@@ -11,4 +11,4 @@ wheels/
 .env
 db.sqlite3
 
-playlists.json
+backend/playlists.json

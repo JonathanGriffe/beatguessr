@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 import requests
@@ -7,6 +8,8 @@ from django.contrib.auth import login
 from django.http import JsonResponse
 from django.utils import timezone
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 class CallbackView(APIView):
@@ -39,7 +42,7 @@ class CallbackView(APIView):
         name = user_info["display_name"]
         spotify_id = user_info["id"]
 
-        user, _ = CustomUser.objects.get_or_create(spotify_id=spotify_id, defaults={"name": name})
+        user, _ = CustomUser.objects.get_or_create(spotify_id=spotify_id, defaults={"username": name, "name": name})
         user.access_token = access_token
         user.refresh_token = refresh_token
         user.token_expires = timezone.now() + timedelta(seconds=token_expires)

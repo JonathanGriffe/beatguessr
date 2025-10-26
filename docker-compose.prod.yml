@@ -3,6 +3,8 @@ services:
     build: ./backend
     env_file:
       - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: core.prod
     depends_on:
       - db
     ports:
@@ -12,15 +14,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: react_app
     depends_on:
       - backend
+    volumes:
+      - ${CERT_DIR}:/etc/ssl
     ports:
-      - "5173:80"
+      - "443:443"
 
   db:
     image: postgres:15
-    container_name: postgres_db
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB}

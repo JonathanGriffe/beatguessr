@@ -1,0 +1,16 @@
+import os
+
+from .settings import *  # noqa
+
+DEBUG = False
+ALLOWED_HOSTS = [os.environ["DOMAIN_NAME"], f"www.{os.environ['DOMAIN_NAME']}"]
+CORS_ALLOWED_ORIGINS = [f"https://{os.environ['DOMAIN_NAME']}"]
+CSRF_TRUSTED_ORIGINS = [f"https://{os.environ['DOMAIN_NAME']}"]
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
