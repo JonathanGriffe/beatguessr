@@ -1,4 +1,4 @@
-RESPONSE_TIMER = 20  # seconds to answer the question
+RESPONSE_TIMER = 25  # seconds to answer the question
 
 
 MIN_HALF_LIFE = 0.1

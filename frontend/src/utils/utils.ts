@@ -22,33 +22,32 @@ function getCookie(name: string) {
 }
 
 function getHeaders() {
-    const requestHeaders: HeadersInit = new Headers();
-    const cookie = getCookie('csrftoken');
-    if (!cookie) {
-        console.error("No CSRF token found in cookies");
-        throw new Error("No CSRF token found in cookies");
-    }
-    requestHeaders.set('X-CSRFToken', cookie);
+  const requestHeaders: HeadersInit = new Headers();
+  const cookie = getCookie('csrftoken');
+  if (!cookie) {
     return requestHeaders;
+  }
+  requestHeaders.set('X-CSRFToken', cookie);
+  return requestHeaders;
 }
 
 function request(method: string, url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string>) {
-    const requestHeaders = getHeaders();
-    Object.entries(headers ?? {}).forEach(([key, value]) => {
-        requestHeaders.set(key, value);
-    });
+  const requestHeaders = getHeaders();
+  Object.entries(headers ?? {}).forEach(([key, value]) => {
+    requestHeaders.set(key, value);
+  });
 
-    return fetch(url, {
-        method,
-        credentials: 'include',
-        headers: requestHeaders,
-        body: JSON.stringify(body),
-    }).then(successOrRedirect(navigate));
+  return fetch(url, {
+    method,
+    credentials: 'include',
+    headers: requestHeaders,
+    body: JSON.stringify(body),
+  }).then(successOrRedirect(navigate));
 }
 
-  const get = (url: string, navigate: NavigateFunction, headers?: Record<string,string>) => request('GET', url, navigate, headers);
-  const post = (url: string, navigate: NavigateFunction, headers?: Record<string,string>, body?: Record<string,string>) => request('POST', url, navigate, headers, body);
-  const put = (url: string, navigate: NavigateFunction, headers?: Record<string,string>, body?: Record<string,string>) => request('PUT', url, navigate, headers, body);
-  const del = (url: string, navigate: NavigateFunction, headers?: Record<string,string>, body?: Record<string,string>) => request('DELETE', url, navigate, headers, body);
+const get = (url: string, navigate: NavigateFunction, headers?: Record<string, string>) => request('GET', url, navigate, headers);
+const post = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string>) => request('POST', url, navigate, headers, body);
+const put = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string>) => request('PUT', url, navigate, headers, body);
+const del = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string>) => request('DELETE', url, navigate, headers, body);
 
-export { successOrRedirect, get, post, put, del };
+export { del, get, post, put, successOrRedirect };

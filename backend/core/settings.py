@@ -20,7 +20,7 @@ SECRET_KEY = "django-insecure-g^=wnppw^xf&sg7cwt^cu5ne+$9o+wt@x&cy0u3612rx64ktls
 
 DEBUG = True
 
-ALLOWED_HOSTS = [os.environ["DJANGO_APP_HOST"]]
+ALLOWED_HOSTS = ["backend"]
 
 
 # Application definition
@@ -58,6 +58,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     os.environ["FRONTEND_URL"],
 ]
+
+APPEND_SLASH = False
 
 ROOT_URLCONF = "core.urls"
 
