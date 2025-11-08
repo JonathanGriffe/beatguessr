@@ -1,5 +1,4 @@
 import json
-import os
 
 from accounts.services.auth import get
 from core.settings import BASE_DIR
@@ -8,10 +7,9 @@ from quiz.models.song import Song
 
 
 def get_items(playlist_id):
-    market = os.environ["MARKET"]
     item_fields = "next,items(track(name,id,popularity,artists(name),album(images(url))))"
     fields = f"name, images(url),tracks({item_fields})"
-    data = get(f"https://api.spotify.com/v1/playlists/{playlist_id}?market={market}&fields={fields}").json()
+    data = get(f"https://api.spotify.com/v1/playlists/{playlist_id}?market=FR&fields={fields}").json()
     tracks = [item["track"] for item in data["tracks"]["items"]]
     image_link = data["images"][0]["url"]
     name = data["name"]

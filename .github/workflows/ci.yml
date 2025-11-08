@@ -17,8 +17,6 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
       POSTGRES_HOST: localhost
-      MARKET: ES
-      FRONTEND_URL: http://localhost
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_TEST_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_TEST_CLIENT_SECRET }}
 

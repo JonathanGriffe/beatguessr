@@ -8,6 +8,8 @@ services:
       - /app/.venv
     env_file:
       - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: core.dev
     depends_on:
       - db
     ports:

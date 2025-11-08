@@ -16,7 +16,7 @@ def get_auth_header():
 
 
 def get_callback_url():
-    return f"{os.environ['FRONTEND_URL']}/callback/"
+    return f"{os.environ.get('DOMAIN_NAME', 'http://localhost:5173')}/callback/"
 
 
 def refresh_access_token(user):

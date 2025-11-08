@@ -16,15 +16,6 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY = "django-insecure-g^=wnppw^xf&sg7cwt^cu5ne+$9o+wt@x&cy0u3612rx64ktls"
-
-DEBUG = True
-
-ALLOWED_HOSTS = ["backend"]
-
-
-# Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -49,15 +40,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    os.environ["FRONTEND_URL"],
-]
-
-CORS_ALLOW_CREDENTIALS = True
-
-CSRF_TRUSTED_ORIGINS = [
-    os.environ["FRONTEND_URL"],
-]
 
 APPEND_SLASH = False
 
