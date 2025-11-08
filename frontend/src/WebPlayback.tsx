@@ -294,35 +294,37 @@ function WebPlayback(props: { playlist_id: string | null }) {
 
   return (
     <div className="flex flex-col w-full items-center m-20 gap-6">
-      {(questionId === null) && timerLength ?
-        <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue w-140 rounded-xl p-2">
-          <div className="cursor-pointer">
-            {
-              songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
-                <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
-                songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
-                  <Spinner className="w-8 h-8" />
-            }
-          </div>
-          <div className="cursor-pointer">
-            {
-              playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
-            }
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Plus className="w-8 h-8 cursor-pointer" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuGroup>
-                {
-                  spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
-                }
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div> : ""
-      }
+      <div className="w-140 h-30">
+        {(questionId === null) && timerLength ?
+          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
+            <div className="cursor-pointer">
+              {
+                songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
+                  <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
+                  songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
+                    <Spinner className="w-8 h-8" />
+              }
+            </div>
+            <div className="cursor-pointer">
+              {
+                playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+              }
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Plus className="w-8 h-8 cursor-pointer" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuGroup>
+                  {
+                    spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
+                  }
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div> : ""
+        }
+      </div>
       <TrackCard track={track} />
       <div className="flex flex-col items-center h-1/3">
         <p>{questionId ? "Next round in" : "Rounds ends in"}</p>
