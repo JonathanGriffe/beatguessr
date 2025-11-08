@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: JonathanGriffe/beatguessr-infra
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.DEPLOY_PAT }}
 
       - name: Update infra
         run: ./scripts/deploy.sh
