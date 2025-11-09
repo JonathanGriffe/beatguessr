@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import mock_open, patch
 
 import pytest
 from quiz.models.playlist import Playlist
@@ -12,8 +12,9 @@ TEST_LONG_PLAYLIST_LENGTH = 340
 
 
 @patch("json.load", return_value={"test": [TEST_PLAYLIST_ID]})
+@patch("quiz.services.playlist.open", new_callable=mock_open, read_data="")
 @pytest.mark.django_db
-def test_create_playlist(load):
+def test_create_playlist(open, load):
     create_playlists()
 
     playlist = Playlist.objects.get()
@@ -26,8 +27,9 @@ def test_create_playlist(load):
 
 
 @patch("json.load", return_value={"test": [TEST_PLAYLIST_ID]})
+@patch("quiz.services.playlist.open", new_callable=mock_open, read_data="")
 @pytest.mark.django_db
-def test_create_playlist_already_created(load):
+def test_create_playlist_already_created(open, load):
     create_playlists()
     create_playlists()
 
@@ -38,8 +40,9 @@ def test_create_playlist_already_created(load):
 
 
 @patch("json.load", return_value={"test": [TEST_LONG_PLAYLIST_ID]})
+@patch("quiz.services.playlist.open", new_callable=mock_open, read_data="")
 @pytest.mark.django_db
-def test_create_long_playlist(load):
+def test_create_long_playlist(open, load):
     create_playlists()
 
     playlist = Playlist.objects.get()
@@ -51,8 +54,9 @@ def test_create_long_playlist(load):
 
 
 @patch("json.load", return_value={"test": [TEST_LONG_PLAYLIST_ID, TEST_PLAYLIST_ID]})
+@patch("quiz.services.playlist.open", new_callable=mock_open, read_data="")
 @pytest.mark.django_db
-def test_create_multiple_playlists(load):
+def test_create_multiple_playlists(open, load):
     create_playlists()
 
     assert Playlist.objects.count() == 2
