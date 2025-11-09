@@ -62,4 +62,4 @@ git tag "$NEW_TAG"
 git push origin "$NEW_TAG"
 
 echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
-echo "::set-output name=version::$NEW_TAG"
+echo "version=$NEW_TAG" >> $GITHUB_OUTPUT
