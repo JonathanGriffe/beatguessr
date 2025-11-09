@@ -55,7 +55,12 @@ jobs:
           token: ${{ secrets.DEPLOY_PAT }}
 
       - name: Update infra
-        run: ./scripts/deploy.sh
-        env:
-          VERSION: ${{ needs.build.outputs.version }}
-          CI_BRANCH: ${{ github.ref_name }}
+        run: |
+          sed -i "s/appVersion: .*/appVersion: ${{ needs.build.outputs.version }}/" helm/values.yaml
+          sed -i "s/appVersion: .*/appVersion: ${{ needs.build.outputs.version }}/" helm/Chart.yaml
+          git add .
+
+          git config user.email "GitHub Actions"
+          git config user.name "actions@github.com"
+          git commit -m "chore: update Docker images to ${{ needs.build.outputs.version }} on prod"
+          git push origin main
