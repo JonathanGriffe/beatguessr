@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+from pythonjsonlogger import jsonlogger  # noqa: F401
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -65,8 +67,14 @@ WSGI_APPLICATION = "core.wsgi.application"
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "fmt": "%(asctime)s %(name)s %(levelname)s %(message)s extras=%(extras)s",
+        },
+    },
     "handlers": {
-        "console": {"class": "logging.StreamHandler"},
+        "console": {"class": "logging.StreamHandler", "formatter": "json"},
     },
     "loggers": {
         "": {

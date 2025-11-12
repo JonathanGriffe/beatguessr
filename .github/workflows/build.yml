@@ -46,7 +46,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: tag-and-build
-    if: ${{ github.ref_name == 'prod' }}
+    env:
+      CI_BRANCH: ${{ github.ref_name }}
     steps:
       - name: Checkout infra repo
         uses: actions/checkout@v4
@@ -58,11 +59,19 @@ jobs:
         env:
           VERSION: ${{ needs.tag-and-build.outputs.version }}
         run: |
-          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/values.yaml
-          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/Chart.yaml
+          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/values-staging.yaml
+          if [ "$CI_BRANCH" = "prod" ]; then
+            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/Chart.yaml
+            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/values-prod.yaml
+          fi
+
           git add .
 
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git commit -m "chore: update Docker images to $VERSION on prod"
+          if [ "$CI_BRANCH" = "prod" ]; then
+            git commit -m "chore: update Docker images to $VERSION"
+          else
+            git commit -m "chore: update staging Docker images to $VERSION"
+          fi
           git push origin main
