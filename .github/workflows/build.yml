@@ -59,10 +59,10 @@ jobs:
         env:
           VERSION: ${{ needs.tag-and-build.outputs.version }}
         run: |
-          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/values-staging.yaml
+          sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/values-staging.yaml
           if [ "$CI_BRANCH" = "prod" ]; then
-            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/Chart.yaml
-            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/values-prod.yaml
+            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/Chart.yaml
+            sed -i "s/appVersion: .*/appVersion: $VERSION/" helm/beatguessr/values-prod.yaml
           fi
 
           git add .
