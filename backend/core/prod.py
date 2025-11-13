@@ -1,11 +1,14 @@
 import os
 
 import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 from .settings import *  # noqa
 
 sentry_sdk.init(
     dsn="https://b61b99261affce2525feb6b4c179858f@o4510352433676288.ingest.de.sentry.io/4510352435314768",
+    environment=f"beatguessr-{os.environ['ENV']}",
+    integrations=[DjangoIntegration()],
     send_default_pii=True,
 )
 

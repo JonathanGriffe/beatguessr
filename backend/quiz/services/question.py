@@ -34,8 +34,6 @@ def compute_activations(user, playlist):
 
 def pick_song(activation_by_song, playlist):
     activations = list(activation_by_song.values())
-    lowest_activation = min(activations or [0])
-    logger.info(f"Lowest activation: {lowest_activation}")
     practice_range_activations = [
         activation for activation in activations if activation > PRACTICE_THRESHOLD and activation < LEARNED_THRESHOLD
     ]
@@ -46,12 +44,21 @@ def pick_song(activation_by_song, playlist):
             song_id for song_id, activation in activation_by_song.items() if activation == selected_activation
         )
         song = playlist.songs.get(id=song_id)
-        logger.info(f"Selecting song {song.title} with activation {selected_activation}")
         return song_id
+    else:
+        song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
+        song = playlist.songs.get(id=song_id)
 
-    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
-    song = playlist.songs.get(id=song_id)
-    logger.info(f"Selecting new song {song.title}")
+    logger.info(
+        "Selecting new song",
+        extra={
+            "song_id": song_id,
+            "song_title": song.title,
+            "song_artist": song.artist,
+            "song_popularity": song.popularity,
+            "song_activation": activation_by_song[song_id],
+        },
+    )
     return song_id
 
 

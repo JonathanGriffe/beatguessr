@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -8,6 +9,8 @@ from quiz.models.question import Question
 from quiz.services.answer import check_answer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 class AnswerView(APIView):
@@ -39,7 +42,9 @@ class AnswerView(APIView):
             "is_artist_correct": is_artist_correct,
         }
 
-        if is_correct or timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
+        question_expired = timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER)
+
+        if is_correct or question_expired:
             resp["song"] = {
                 "title": question.song.title,
                 "artist": question.song.artist,
@@ -53,4 +58,16 @@ class AnswerView(APIView):
             if is_artist_correct:
                 resp["song"]["artist"] = question.song.artist
 
+        if not question_expired:
+            logger.info(
+                "User made a guess",
+                extra={
+                    "user_id": user.id,
+                    "question_id": question.id,
+                    "song_id": question.song.id,
+                    "is_correct": is_correct,
+                    "is_title_correct": is_title_correct,
+                    "is_artist_correct": is_artist_correct,
+                },
+            )
         return JsonResponse(resp)

@@ -50,4 +50,5 @@ class CallbackView(APIView):
 
         login(request, user)
 
+        logger.info("User logged in", extra={"user_id": user.id, "spotify_id": spotify_id, "user_name": name})
         return JsonResponse({"message": "Logged in successfully", "access_token": access_token})
