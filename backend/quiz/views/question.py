@@ -17,6 +17,6 @@ class QuestionView(APIView):
         if not playlist_id:
             return JsonResponse({"error": "Playlist is required"}, status=400)
 
-        question_data = generate_question(user, device_id, playlist_id)
+        generate_question(user, device_id, playlist_id)
 
-        return JsonResponse(question_data)
+        return JsonResponse({"status": "ok"}, status=200)

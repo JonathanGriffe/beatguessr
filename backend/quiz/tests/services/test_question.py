@@ -40,9 +40,9 @@ def test_pick_song():
     }
 
     # picks in priority songs that are being learned
-    assert pick_song(activations_by_song, playlist) == training_song.id
+    assert pick_song(activations_by_song, playlist) == training_song
 
     del activations_by_song[training_song.id]
 
     # else, pick a new song (that doesn't appear in activations_by_song)
-    assert pick_song(activations_by_song, playlist) == never_guessed_song.id
+    assert pick_song(activations_by_song, playlist) == never_guessed_song

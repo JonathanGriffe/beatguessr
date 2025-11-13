@@ -7,4 +7,5 @@ export interface Track {
 
 export interface Settings {
     volume: number;
+    roundTimer: number;
 }

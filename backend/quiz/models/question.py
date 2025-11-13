@@ -6,5 +6,3 @@ class Question(models.Model):
     user = models.ForeignKey("accounts.CustomUser", on_delete=models.CASCADE, related_name="questions")
     created_at = models.DateTimeField(auto_now_add=True)
     answered_correctly = models.BooleanField(default=False)
-    title_found = models.BooleanField(default=False)
-    artist_found = models.BooleanField(default=False)

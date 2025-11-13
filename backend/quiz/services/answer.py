@@ -1,8 +1,4 @@
 import re
-from datetime import timedelta
-
-from django.utils import timezone
-from quiz.constants import RESPONSE_TIMER
 
 
 def levenshtein(s1, s2):
@@ -33,15 +29,13 @@ def normalize(text):
     return text
 
 
-def check_answer(question, answer):
-    if not question or not answer:
-        return False, False
-    if timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
+def check_answer(song, answer):
+    if not song or not answer:
         return False, False
 
     normalized_answer = normalize(answer)
-    normalized_title = normalize(question.song.title)
-    normalized_artist = normalize(question.song.artist)
+    normalized_title = normalize(song.title)
+    normalized_artist = normalize(song.artist)
 
     if (
         min(

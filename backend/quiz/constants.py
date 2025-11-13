@@ -1,5 +1,4 @@
-RESPONSE_TIMER = 25  # seconds to answer the question
-
+QUESTIONS_CACHE_TIMEOUT = 120
 
 MIN_HALF_LIFE = 0.1
 WEIGHTS = [

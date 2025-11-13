@@ -3,10 +3,11 @@ from collections import defaultdict
 
 import numpy as np
 from accounts.services.auth import put
+from django.core.cache import cache
 from django.db.models.expressions import Window
 from django.db.models.functions import RowNumber
 from django.utils import timezone
-from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, RESPONSE_TIMER, WEIGHTS
+from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, QUESTIONS_CACHE_TIMEOUT, WEIGHTS
 from quiz.models import Question
 from quiz.models.playlist import Playlist
 
@@ -44,7 +45,6 @@ def pick_song(activation_by_song, playlist):
             song_id for song_id, activation in activation_by_song.items() if activation == selected_activation
         )
         song = playlist.songs.get(id=song_id)
-        return song_id
     else:
         song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
         song = playlist.songs.get(id=song_id)
@@ -59,7 +59,7 @@ def pick_song(activation_by_song, playlist):
             "song_activation": activation_by_song.get(song_id, 0),
         },
     )
-    return song_id
+    return song
 
 
 def song_activation(questions):
@@ -98,20 +98,15 @@ def generate_question(user, device_id, playlist_id):
     playlist = Playlist.objects.get(id=playlist_id)
     activations = compute_activations(user, playlist)
 
-    song_id = pick_song(activations, playlist)
+    song = pick_song(activations, playlist)
 
-    question = Question.objects.create(song_id=song_id, user=user)
+    cache.set(f"question-{user.id}", {"song_id": song.id}, QUESTIONS_CACHE_TIMEOUT)
 
     put(
         f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
         user,
         json={
-            "uris": [f"spotify:track:{question.song.spotify_id}"],
+            "uris": [f"spotify:track:{song.spotify_id}"],
             "position_ms": 0,
         },
     )
-
-    return {
-        "question_id": question.id,
-        "timer_ms": RESPONSE_TIMER * 1000,
-    }
