@@ -6,8 +6,8 @@ function Quiz() {
   const [queryParams] = useSearchParams();
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <WebPlayback playlist_id={queryParams.get("playlist_id")}/>
+    <div className="flex items-center justify-center h-full">
+      <WebPlayback playlist_id={queryParams.get("playlist_id")} />
     </div>
   );
 }

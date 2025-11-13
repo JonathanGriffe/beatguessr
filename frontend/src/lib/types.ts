@@ -4,3 +4,7 @@ export interface Track {
     image_link?: string;
     spotify_id?: string;
 }
+
+export interface Settings {
+    volume: number;
+}

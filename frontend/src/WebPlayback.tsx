@@ -2,6 +2,7 @@ import { Check, CirclePlus, Pause, Play, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
+import SettingsCard from './SettingsCard';
 import TrackCard from './TrackCard';
 import './WebPlayback.css';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
@@ -49,6 +50,10 @@ function WebPlayback(props: { playlist_id: string | null }) {
   const [playing, setPlaying] = useState<boolean>(true);
 
   const answerStatusTimerId = useRef<number | undefined>(undefined);
+
+  const settingsRef = useRef({
+    volume: 50,
+  });
 
   const changeTrack = () => {
     console.log("change track !")
@@ -233,6 +238,10 @@ function WebPlayback(props: { playlist_id: string | null }) {
     }, ROUND_SEPARATION_TIMER);
   }
 
+  const setVolume = (value: number[]) => {
+    player.current?.setVolume(value[0] / 100);
+  }
+
   useEffect(() => {
     let script: HTMLScriptElement | null = null;
     const initSpotifyPlayer = async () => {
@@ -294,52 +303,57 @@ function WebPlayback(props: { playlist_id: string | null }) {
   }, []);
 
   return (
-    <div className="flex flex-col w-full items-center m-20 gap-6">
-      <div className="w-140 h-30">
-        {(questionId === null) && timerLength ?
-          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
-            <div className="cursor-pointer">
-              {
-                songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
-                  <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
-                  songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
-                    <Spinner className="w-8 h-8" />
-              }
-            </div>
-            <div className="cursor-pointer">
-              {
-                playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
-              }
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Plus className="w-8 h-8 cursor-pointer" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  {
-                    spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
-                  }
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div> : ""
-        }
+    <div className='w-full h-full flex-1 relative flex items-center justify-center'>
+      <div className="absolute top-0 left-0 p-20">
+        <SettingsCard settings={settingsRef.current} setVolume={setVolume} />
       </div>
-      <TrackCard track={track} />
-      <div className="flex flex-col items-center h-1/3">
-        <p>{questionId ? "Next round in" : "Rounds ends in"}</p>
-        <p className="text-greenblue font-bold text-4xl">{timer}</p>
-      </div>
-      <div className="w-full">
-        <div className="h-3 w-full rounded overflow-hidden">
-          {questionId ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
-        </div>
-        <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            sendResponse(text);
+      <div className="flex flex-col w-full items-center p-20 gap-6">
+        <div className="w-140 h-30">
+          {(questionId === null) && timerLength ?
+            <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
+              <div className="cursor-pointer">
+                {
+                  songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
+                    <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
+                    songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
+                      <Spinner className="w-8 h-8" />
+                }
+              </div>
+              <div className="cursor-pointer">
+                {
+                  playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+                }
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Plus className="w-8 h-8 cursor-pointer" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    {
+                      spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
+                    }
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div> : ""
           }
-        }} />
+        </div>
+        <TrackCard track={track} />
+        <div className="flex flex-col items-center h-1/3">
+          <p>{questionId ? "Next round in" : "Rounds ends in"}</p>
+          <p className="text-greenblue font-bold text-4xl">{timer}</p>
+        </div>
+        <div className="w-full">
+          <div className="h-3 w-full rounded overflow-hidden">
+            {questionId ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
+          </div>
+          <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              sendResponse(text);
+            }
+          }} />
+        </div>
       </div>
     </div>
   );

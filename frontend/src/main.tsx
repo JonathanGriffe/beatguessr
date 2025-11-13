@@ -1,11 +1,11 @@
 import ReactDOM from 'react-dom/client';
-import './index.css';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import App from './App';
-import Login from './Login';
 import Callback from './Callback';
-import { BrowserRouter, Routes, Route } from 'react-router';
-import Quiz from './Quiz';
 import Header from './Header';
+import './index.css';
+import Login from './Login';
+import Quiz from './Quiz';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,13 +14,19 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <BrowserRouter>
-    <Header/>
-    <Routes>
-      <Route path="/" element={<App />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/callback" element={<Callback />} />
-      <Route path="/quiz" element={<Quiz />} />
-    </Routes>
+    <div className="flex flex-col h-screen">
+      <div className="absolute top-0 w-full">
+        <Header />
+      </div>
+      <div className="flex flex-col h-full">
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/callback" element={<Callback />} />
+          <Route path="/quiz" element={<Quiz />} />
+        </Routes>
+      </div>
+    </div>
   </BrowserRouter>
 );
 
