@@ -143,6 +143,7 @@ function WebPlayback(props: { playlist_id: string | null }) {
   }
 
   const sendResponse = (text: string) => {
+    setText("");
     if (!questionId) {
       console.error("No question ID set");
       return;

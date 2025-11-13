@@ -56,7 +56,7 @@ def pick_song(activation_by_song, playlist):
             "song_title": song.title,
             "song_artist": song.artist,
             "song_popularity": song.popularity,
-            "song_activation": activation_by_song[song_id],
+            "song_activation": activation_by_song.get(song_id, 0),
         },
     )
     return song_id
