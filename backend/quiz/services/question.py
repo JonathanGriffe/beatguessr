@@ -95,7 +95,7 @@ def song_activation(questions):
 
 def generate_question(user, device_id, playlist_id, mode):
     """Logic to generate or retrieve a quiz question for the user"""
-    playlist = Playlist.objects.get(id=playlist_id)
+    playlist = Playlist.objects.for_user(user).get(spotify_id=playlist_id)
     activations = compute_activations(user, playlist)
 
     if mode == "training":

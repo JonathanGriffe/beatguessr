@@ -29,6 +29,9 @@ class CallbackView(APIView):
             },
         )
 
+        if res.status_code >= 400:
+            logger.info("Failed to get access token", extra={"error": res.text})
+
         data = res.json()
         access_token = data["access_token"]
         refresh_token = data["refresh_token"]

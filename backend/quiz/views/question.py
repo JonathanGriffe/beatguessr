@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from quiz.models.playlist import Playlist
 from quiz.services.question import generate_question
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -21,6 +22,9 @@ class QuestionView(APIView):
 
         if mode not in ["casual", "training"]:
             return JsonResponse({"error": "Invalid mode"}, status=400)
+
+        if not Playlist.objects.for_user(user).filter(spotify_id=playlist_id).exists():
+            return JsonResponse({"error": "Invalid Playlist"}, status=400)
 
         generate_question(user, device_id, playlist_id, mode)
 

@@ -10,3 +10,6 @@ WEIGHTS = [
 ]  # wins  # losses  # win_streak  # loss_streak  # max_win_streak
 PRACTICE_THRESHOLD = 0.4
 LEARNED_THRESHOLD = 0.7
+
+PLAYLIST_SIZE_LIMIT = 10
+PLAYLIST_LIMIT = 10
