@@ -7,7 +7,7 @@ import TrackCard from './TrackCard';
 import './WebPlayback.css';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { Spinner } from './components/ui/spinner';
-import type { Track } from './lib/types';
+import type { Settings, Track } from './lib/types';
 import { get, post } from './utils/utils';
 
 declare global {
@@ -51,9 +51,10 @@ function WebPlayback(props: { playlist_id: string | null }) {
   const answerStatusTimerId = useRef<number | undefined>(undefined);
 
   const [isQuestion, setIsQuestion] = useState<boolean>(false);
-  const settingsRef = useRef({
+  const settingsRef = useRef<Settings>({
     volume: 50,
-    roundTimer: 25
+    roundTimer: 25,
+    mode: 'casual'
   });
 
   const changeTrack = () => {
@@ -64,7 +65,7 @@ function WebPlayback(props: { playlist_id: string | null }) {
     setText("");
     setTrack({});
     setIsQuestion(true);
-    get(`/api/quiz/question/?device_id=${deviceId.current}&playlist_id=${props.playlist_id}`, navigate).then(res => res.json()).then(_ => {
+    get(`/api/quiz/question/?device_id=${deviceId.current}&playlist_id=${props.playlist_id}&mode=${settingsRef.current.mode}`, navigate).then(res => res.json()).then(_ => {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(roundTimeout, settingsRef.current.roundTimer * 1000);
       setTimerLength(settingsRef.current.roundTimer * 1000);

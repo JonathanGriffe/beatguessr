@@ -35,7 +35,8 @@ class AnswerView(APIView):
 
         if give_up or answered_correctly:
             cache.delete(f"question-{user.id}")
-            Question.objects.create(user=user, song_id=solution["song_id"], answered_correctly=answered_correctly)
+            if solution["mode"] == "training":
+                Question.objects.create(user=user, song_id=solution["song_id"], answered_correctly=answered_correctly)
             resp["song"] = {
                 "title": song.title,
                 "artist": song.artist,
@@ -54,6 +55,7 @@ class AnswerView(APIView):
                 f"question-{user.id}",
                 {
                     "song_id": solution["song_id"],
+                    "mode": solution["mode"],
                     "is_title_correct": is_title_correct,
                     "is_artist_correct": is_artist_correct,
                 },

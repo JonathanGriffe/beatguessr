@@ -93,14 +93,17 @@ def song_activation(questions):
     return 2 ** (-adjusted_time / half_life)
 
 
-def generate_question(user, device_id, playlist_id):
+def generate_question(user, device_id, playlist_id, mode):
     """Logic to generate or retrieve a quiz question for the user"""
     playlist = Playlist.objects.get(id=playlist_id)
     activations = compute_activations(user, playlist)
 
-    song = pick_song(activations, playlist)
+    if mode == "training":
+        song = pick_song(activations, playlist)
+    else:
+        song = playlist.songs.order_by("?").first()
 
-    cache.set(f"question-{user.id}", {"song_id": song.id}, QUESTIONS_CACHE_TIMEOUT)
+    cache.set(f"question-{user.id}", {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
 
     put(
         f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",

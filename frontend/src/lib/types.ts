@@ -8,4 +8,5 @@ export interface Track {
 export interface Settings {
     volume: number;
     roundTimer: number;
+    mode: 'casual' | 'training';
 }

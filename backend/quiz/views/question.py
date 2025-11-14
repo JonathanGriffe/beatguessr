@@ -11,12 +11,17 @@ class QuestionView(APIView):
         user = request.user
         playlist_id = request.query_params.get("playlist_id")
         device_id = request.query_params.get("device_id")
+        mode = request.query_params.get("mode")
+
         if not device_id:
             return JsonResponse({"error": "Device ID is required"}, status=400)
 
         if not playlist_id:
             return JsonResponse({"error": "Playlist is required"}, status=400)
 
-        generate_question(user, device_id, playlist_id)
+        if mode not in ["casual", "training"]:
+            return JsonResponse({"error": "Invalid mode"}, status=400)
+
+        generate_question(user, device_id, playlist_id, mode)
 
         return JsonResponse({"status": "ok"}, status=200)
