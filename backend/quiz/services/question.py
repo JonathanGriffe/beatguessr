@@ -3,10 +3,11 @@ from collections import defaultdict
 
 import numpy as np
 from accounts.services.auth import put
+from django.core.cache import cache
 from django.db.models.expressions import Window
 from django.db.models.functions import RowNumber
 from django.utils import timezone
-from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, RESPONSE_TIMER, WEIGHTS
+from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, QUESTIONS_CACHE_TIMEOUT, WEIGHTS
 from quiz.models import Question
 from quiz.models.playlist import Playlist
 
@@ -34,8 +35,6 @@ def compute_activations(user, playlist):
 
 def pick_song(activation_by_song, playlist):
     activations = list(activation_by_song.values())
-    lowest_activation = min(activations or [0])
-    logger.info(f"Lowest activation: {lowest_activation}")
     practice_range_activations = [
         activation for activation in activations if activation > PRACTICE_THRESHOLD and activation < LEARNED_THRESHOLD
     ]
@@ -46,13 +45,21 @@ def pick_song(activation_by_song, playlist):
             song_id for song_id, activation in activation_by_song.items() if activation == selected_activation
         )
         song = playlist.songs.get(id=song_id)
-        logger.info(f"Selecting song {song.title} with activation {selected_activation}")
-        return song_id
+    else:
+        song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
+        song = playlist.songs.get(id=song_id)
 
-    song_id = playlist.songs.exclude(id__in=activation_by_song.keys()).order_by("-popularity").first().id
-    song = playlist.songs.get(id=song_id)
-    logger.info(f"Selecting new song {song.title}")
-    return song_id
+    logger.info(
+        "Selecting new song",
+        extra={
+            "song_id": song_id,
+            "song_title": song.title,
+            "song_artist": song.artist,
+            "song_popularity": song.popularity,
+            "song_activation": activation_by_song.get(song_id, 0),
+        },
+    )
+    return song
 
 
 def song_activation(questions):
@@ -86,25 +93,23 @@ def song_activation(questions):
     return 2 ** (-adjusted_time / half_life)
 
 
-def generate_question(user, device_id, playlist_id):
+def generate_question(user, device_id, playlist_id, mode):
     """Logic to generate or retrieve a quiz question for the user"""
-    playlist = Playlist.objects.get(id=playlist_id)
+    playlist = Playlist.objects.for_user(user).get(spotify_id=playlist_id)
     activations = compute_activations(user, playlist)
 
-    song_id = pick_song(activations, playlist)
+    if mode == "training":
+        song = pick_song(activations, playlist)
+    else:
+        song = playlist.songs.order_by("?").first()
 
-    question = Question.objects.create(song_id=song_id, user=user)
+    cache.set(f"question-{user.id}", {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
 
     put(
         f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
         user,
         json={
-            "uris": [f"spotify:track:{question.song.spotify_id}"],
+            "uris": [f"spotify:track:{song.spotify_id}"],
             "position_ms": 0,
         },
     )
-
-    return {
-        "question_id": question.id,
-        "timer_ms": RESPONSE_TIMER * 1000,
-    }

@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 from datetime import timedelta
 from functools import partial
@@ -8,14 +9,22 @@ from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.exceptions import NotAuthenticated
 
+logger = logging.getLogger(__name__)
+
 
 def get_auth_header():
+    """
+    Computes the header used to make client requests to the Spotify API
+    """
     return base64.b64encode(
         f"{os.environ['SPOTIFY_CLIENT_ID']}:{os.environ['SPOTIFY_CLIENT_SECRET']}".encode()
     ).decode()
 
 
 def get_callback_url():
+    """
+    Computes the callback URL used to login to Spotify
+    """
     if os.environ.get("DOMAIN_NAME"):
         return f"https://{os.environ.get('DOMAIN_NAME')}/callback/"
     else:
@@ -23,6 +32,9 @@ def get_callback_url():
 
 
 def refresh_access_token(user):
+    """
+    Uses the refresh token to get a new access token for a user
+    """
     refresh_token = user.refresh_token
     response = requests.post(
         "https://accounts.spotify.com/api/token",
@@ -47,10 +59,14 @@ def refresh_access_token(user):
     user.token_expires = timezone.now() + timedelta(seconds=data["expires_in"])
 
     user.save()
+    logger.info("Refreshed access token", extra={"user_id": user.id})
     return user.access_token
 
 
 def get_client_token():
+    """
+    Uses the client credentials to get a server token
+    """
     response = requests.post(
         "https://accounts.spotify.com/api/token",
         data={"grant_type": "client_credentials"},
@@ -64,6 +80,7 @@ def get_client_token():
     client_token = data["access_token"]
     cache.set("service_access_token", client_token, data["expires_in"])
 
+    logger.info("Got client token")
     return client_token
 
 

@@ -1,13 +1,15 @@
-from datetime import timedelta
+import logging
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
 from django.http import JsonResponse
-from django.utils import timezone
-from quiz.constants import RESPONSE_TIMER
+from quiz.constants import QUESTIONS_CACHE_TIMEOUT
 from quiz.models.question import Question
+from quiz.models.song import Song
 from quiz.services.answer import check_answer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 
 class AnswerView(APIView):
@@ -16,41 +18,59 @@ class AnswerView(APIView):
     def post(self, request):
         user = request.user
         answer = request.data.get("text")
-        question_id = request.data.get("question_id")
+        give_up = request.data.get("give_up", False)
 
-        try:
-            question = Question.objects.get(id=question_id, user=user)
-        except ObjectDoesNotExist:
-            return JsonResponse({"error": "Question not found"}, status=404)
+        solution = cache.get(f"question-{user.id}")
+        song = Song.objects.get(id=solution["song_id"])
 
-        is_title_correct, is_artist_correct = check_answer(question, answer) if answer else (False, False)
-
-        is_title_correct = is_title_correct or question.title_found
-        is_artist_correct = is_artist_correct or question.artist_found
-        is_correct = is_title_correct and is_artist_correct
-
-        question.answered_correctly = is_correct
-        question.title_found = is_title_correct
-        question.artist_found = is_artist_correct
-        question.save()
+        is_title_correct, is_artist_correct = check_answer(song, answer) if answer else (False, False)
+        is_title_correct = is_title_correct or solution.get("is_title_correct", False)
+        is_artist_correct = is_artist_correct or solution.get("is_artist_correct", False)
+        answered_correctly = is_title_correct and is_artist_correct
 
         resp = {
             "is_title_correct": is_title_correct,
             "is_artist_correct": is_artist_correct,
         }
 
-        if is_correct or timezone.now() - question.created_at > timedelta(seconds=RESPONSE_TIMER):
+        if give_up or answered_correctly:
+            cache.delete(f"question-{user.id}")
+            if solution["mode"] == "training":
+                Question.objects.create(user=user, song_id=solution["song_id"], answered_correctly=answered_correctly)
             resp["song"] = {
-                "title": question.song.title,
-                "artist": question.song.artist,
-                "image_link": question.song.image_link,
-                "spotify_id": question.song.spotify_id,
+                "title": song.title,
+                "artist": song.artist,
+                "image_link": song.image_link,
+                "spotify_id": song.spotify_id,
             }
-        elif is_title_correct or is_artist_correct:
-            resp["song"] = {}
-            if is_title_correct:
-                resp["song"]["title"] = question.song.title
-            if is_artist_correct:
-                resp["song"]["artist"] = question.song.artist
 
+        elif is_title_correct or is_artist_correct or give_up:
+            resp["song"] = {}
+            if is_title_correct or give_up:
+                resp["song"]["title"] = song.title
+            if is_artist_correct or give_up:
+                resp["song"]["artist"] = song.artist
+
+            cache.set(
+                f"question-{user.id}",
+                {
+                    "song_id": solution["song_id"],
+                    "mode": solution["mode"],
+                    "is_title_correct": is_title_correct,
+                    "is_artist_correct": is_artist_correct,
+                },
+                QUESTIONS_CACHE_TIMEOUT,
+            )
+
+        logger.info(
+            "User made a guess",
+            extra={
+                "user_id": user.id,
+                "give_up": give_up,
+                "song_id": solution["song_id"],
+                "is_correct": answered_correctly,
+                "is_title_correct": is_title_correct,
+                "is_artist_correct": is_artist_correct,
+            },
+        )
         return JsonResponse(resp)

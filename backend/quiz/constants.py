@@ -1,5 +1,4 @@
-RESPONSE_TIMER = 25  # seconds to answer the question
-
+QUESTIONS_CACHE_TIMEOUT = 120
 
 MIN_HALF_LIFE = 0.1
 WEIGHTS = [
@@ -11,3 +10,6 @@ WEIGHTS = [
 ]  # wins  # losses  # win_streak  # loss_streak  # max_win_streak
 PRACTICE_THRESHOLD = 0.4
 LEARNED_THRESHOLD = 0.7
+
+PLAYLIST_SIZE_LIMIT = 10
+PLAYLIST_LIMIT = 10

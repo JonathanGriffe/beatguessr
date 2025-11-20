@@ -29,6 +29,9 @@ class CallbackView(APIView):
             },
         )
 
+        if res.status_code >= 400:
+            logger.info("Failed to get access token", extra={"error": res.text})
+
         data = res.json()
         access_token = data["access_token"]
         refresh_token = data["refresh_token"]
@@ -50,4 +53,5 @@ class CallbackView(APIView):
 
         login(request, user)
 
+        logger.info("User logged in", extra={"user_id": user.id, "spotify_id": spotify_id, "user_name": name})
         return JsonResponse({"message": "Logged in successfully", "access_token": access_token})

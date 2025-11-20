@@ -4,3 +4,9 @@ export interface Track {
     image_link?: string;
     spotify_id?: string;
 }
+
+export interface Settings {
+    volume: number;
+    roundTimer: number;
+    mode: 'casual' | 'training';
+}

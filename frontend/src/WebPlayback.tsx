@@ -2,11 +2,12 @@ import { Check, CirclePlus, Pause, Play, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
+import SettingsCard from './SettingsCard';
 import TrackCard from './TrackCard';
 import './WebPlayback.css';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { Spinner } from './components/ui/spinner';
-import type { Track } from './lib/types';
+import type { Settings, Track } from './lib/types';
 import { get, post } from './utils/utils';
 
 declare global {
@@ -26,7 +27,6 @@ interface SpotifyPlaylist {
 function WebPlayback(props: { playlist_id: string | null }) {
   const navigate = useNavigate();
 
-  const [questionId, setQuestionId] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [answerStatus, setAnswerStatus] = useState<'default' | 'correct' | 'wrong'>('default');
   const timeoutRef: { current: number | undefined } = useRef(undefined);
@@ -50,6 +50,13 @@ function WebPlayback(props: { playlist_id: string | null }) {
 
   const answerStatusTimerId = useRef<number | undefined>(undefined);
 
+  const [isQuestion, setIsQuestion] = useState<boolean>(false);
+  const settingsRef = useRef<Settings>({
+    volume: 50,
+    roundTimer: 25,
+    mode: 'casual'
+  });
+
   const changeTrack = () => {
     console.log("change track !")
     if (props.playlist_id === null) {
@@ -57,12 +64,12 @@ function WebPlayback(props: { playlist_id: string | null }) {
     }
     setText("");
     setTrack({});
-    get(`/api/quiz/question/?device_id=${deviceId.current}&playlist_id=${props.playlist_id}`, navigate).then(res => res.json()).then(data => {
-      setQuestionId(data.question_id);
+    setIsQuestion(true);
+    get(`/api/quiz/question/?device_id=${deviceId.current}&playlist_id=${props.playlist_id}&mode=${settingsRef.current.mode}`, navigate).then(res => res.json()).then(_ => {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => roundTimeout(data.question_id), data.timer_ms);
-      setTimerLength(data.timer_ms);
-      startTimer(data.timer_ms);
+      timeoutRef.current = setTimeout(roundTimeout, settingsRef.current.roundTimer * 1000);
+      setTimerLength(settingsRef.current.roundTimer * 1000);
+      startTimer(settingsRef.current.roundTimer * 1000);
     });
   };
 
@@ -143,16 +150,12 @@ function WebPlayback(props: { playlist_id: string | null }) {
   }
 
   const sendResponse = (text: string) => {
-    if (!questionId) {
-      console.error("No question ID set");
-      return;
-    }
+    setText("");
     if (text.length === 0) {
       return;
     }
     post('/api/quiz/answer/', navigate, { 'Content-Type': 'application/json' },
       {
-        question_id: questionId,
         text: text,
       },
     ).then(res => res.json())
@@ -185,7 +188,6 @@ function WebPlayback(props: { playlist_id: string | null }) {
         }, timerRemaining.current);
       }
       setPlaying((prev) => !prev);
-      player.current.togglePlay();
     }
   }
 
@@ -210,26 +212,31 @@ function WebPlayback(props: { playlist_id: string | null }) {
     updateTimer(duration - 1000 * Math.floor((duration - 1) / 1000));
   }
 
-  const roundTimeout = (questionId: string) => {
+  const roundTimeout = () => {
     post('/api/quiz/answer/', navigate, { 'Content-Type': 'application/json' },
       {
-        question_id: questionId,
+        give_up: true,
       },
     ).then(res => res.json()).then(data => {
       endRound(data.song);
     })
   }
   const endRound = (track: Track) => {
+    setIsQuestion(false);
     setTrack(track);
     if (track.spotify_id) {
       getSongLiked(track.spotify_id);
     }
-    setQuestionId(null);
     startTimer(ROUND_SEPARATION_TIMER);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       changeTrack();
     }, ROUND_SEPARATION_TIMER);
+  }
+
+  const setVolume = (value: number[]) => {
+    settingsRef.current.volume = value[0];
+    player.current?.setVolume(value[0] / 100);
   }
 
   useEffect(() => {
@@ -293,52 +300,57 @@ function WebPlayback(props: { playlist_id: string | null }) {
   }, []);
 
   return (
-    <div className="flex flex-col w-full items-center m-20 gap-6">
-      <div className="w-140 h-30">
-        {(questionId === null) && timerLength ?
-          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
-            <div className="cursor-pointer">
-              {
-                songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
-                  <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
-                  songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
-                    <Spinner className="w-8 h-8" />
-              }
-            </div>
-            <div className="cursor-pointer">
-              {
-                playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
-              }
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Plus className="w-8 h-8 cursor-pointer" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  {
-                    spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
-                  }
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div> : ""
-        }
+    <div className='w-full h-full flex-1 relative flex items-center justify-center'>
+      <div className="absolute top-0 left-0 p-20">
+        <SettingsCard settingsRef={settingsRef} setVolume={setVolume} />
       </div>
-      <TrackCard track={track} />
-      <div className="flex flex-col items-center h-1/3">
-        <p>{questionId ? "Next round in" : "Rounds ends in"}</p>
-        <p className="text-greenblue font-bold text-4xl">{timer}</p>
-      </div>
-      <div className="w-full">
-        <div className="h-3 w-full rounded overflow-hidden">
-          {questionId ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
-        </div>
-        <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            sendResponse(text);
+      <div className="flex flex-col w-full items-center p-20 gap-6">
+        <div className="w-140 h-30">
+          {!isQuestion && timerLength ?
+            <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
+              <div className="cursor-pointer">
+                {
+                  songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
+                    <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
+                    songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
+                      <Spinner className="w-8 h-8" />
+                }
+              </div>
+              <div className="cursor-pointer">
+                {
+                  playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+                }
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Plus className="w-8 h-8 cursor-pointer" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    {
+                      spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
+                    }
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div> : ""
           }
-        }} />
+        </div>
+        <TrackCard track={track} />
+        <div className="flex flex-col items-center h-1/3">
+          <p>{isQuestion ? "Next round in" : "Rounds ends in"}</p>
+          <p className="text-greenblue font-bold text-4xl">{timer}</p>
+        </div>
+        <div className="w-full">
+          <div className="h-3 w-full rounded overflow-hidden">
+            {isQuestion ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
+          </div>
+          <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              sendResponse(text);
+            }
+          }} />
+        </div>
       </div>
     </div>
   );

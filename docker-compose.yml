@@ -29,6 +29,12 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:8.2
+    restart: always
+    ports:
+      - "6379:6379"
+
   db:
     image: postgres:15
     restart: always
