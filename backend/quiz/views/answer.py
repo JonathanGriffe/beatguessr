@@ -83,6 +83,7 @@ class AnswerView(APIView):
             "User made a guess",
             extra={
                 "user_id": user.id,
+                "text": answer,
                 "give_up": give_up,
                 "song_id": question_data["song_id"],
                 "is_correct": answered_correctly,
