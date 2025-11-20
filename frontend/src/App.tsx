@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { get, post } from './utils/utils';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import './App.css';
 import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
 import PlaylistSelector from './PlaylistSelector';
+import { get, post } from './utils/utils';
 
 interface UserData {
   name: string;
@@ -14,19 +15,33 @@ interface UserData {
 
 function App() {
   const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
   let [UserData, setUserData] = useState<UserData | null>(null);
 
   function logout() {
     post(`/api/accounts/logout/`, navigate).then(() => navigate('/login'));
   }
 
+  function joinRoom() {
+    const roomCode = inputRef.current?.value;
+    if (roomCode) {
+      navigate(`/quiz/?room=${roomCode}`);
+    }
+  }
+
   useEffect(() => {
     get(`/api/accounts/user/`, navigate).then(res => res.json())
-    .then(data => setUserData(data));
+      .then(data => setUserData(data));
   }, []);
   return (
     <div className="flex h-screen min-w-screen gap-10 items-center justify-center p-10">
-      <PlaylistSelector/>
+      <div className="w-full flex flex-col m-15 gap-5">
+        <div className="h-10 flex flex-row">
+          <Input className="w-50 text-white bg-cred" placeholder='Room Code' ref={inputRef}></Input>
+          <Button onClick={joinRoom} className="w-30 bg-corange hover:cursor-pointer p-4">Join Room</Button>
+        </div>
+        <PlaylistSelector />
+      </div>
       <div className="border-2 border-cred flex flex-col gap-4 ml-auto  mr-10 p-4 rounded-lg">
         <h1 className="font-bold inline text-greenblue text-5xl">{UserData?.name}</h1>
         <div className="flex flex-col items-center">
@@ -39,7 +54,7 @@ function App() {
         </div>
         <Button className="bg-cred" onClick={logout}>Logout</Button>
       </div>
-    </div>
+    </div >
   );
 }
 

@@ -38,7 +38,7 @@ function PlaylistSelector() {
         })
     }, []);
 
-    return (<div className="h-150 rounded-2xl border-8 border-cred p-4 flex-1 m-15">
+    return (<div className="h-160 rounded-2xl border-8 border-cred p-4">
         {Object.keys(categories).length > 0 &&
             <Tabs defaultValue={sortCategories(Object.keys(categories))[0]}>
                 <TabsList className="bg-greenblue">
