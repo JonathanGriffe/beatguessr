@@ -9,16 +9,19 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 
 import os
 
-import quiz.routing
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 
+app = get_asgi_application()
+
+import quiz.routing  # noqa
+
 application = ProtocolTypeRouter(
     {
-        "http": get_asgi_application(),
+        "http": app,
         "websocket": AuthMiddlewareStack(URLRouter(quiz.routing.websocket_urlpatterns)),
     }
 )
