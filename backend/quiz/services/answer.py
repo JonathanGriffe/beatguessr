@@ -1,5 +1,7 @@
 import re
 
+from quiz.constants import MINIMUM_REWARD, REWARD_BY_PLACE
+
 
 def levenshtein(s1, s2):
     if len(s1) < len(s2):
@@ -25,6 +27,7 @@ def normalize(text):
     text = text.lower().strip()
     text = text.split("-", 1)[0]
     text = text.split("(", 1)[0]
+    text = text.split("/", 1)[0]
     text = re.sub(r"[^a-z0-9 ]", "", text)
     return text
 
@@ -49,3 +52,16 @@ def check_answer(song, answer):
         levenshtein(normalized_title, normalized_answer) <= 1,
         levenshtein(normalized_artist, normalized_answer) <= 1,
     )
+
+
+def compute_score(user):
+    def update_score(room_data):
+        if user.name in room_data["correct_guesses"]:
+            return
+
+        room_data["scores"][user.name] += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), MINIMUM_REWARD)
+        room_data["correct_guesses"].append(user.name)
+
+        return room_data
+
+    return update_score

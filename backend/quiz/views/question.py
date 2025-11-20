@@ -1,6 +1,11 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.core.cache import cache
 from django.http import JsonResponse
+from quiz.constants import QUESTIONS_CACHE_TIMEOUT
 from quiz.models.playlist import Playlist
-from quiz.services.question import generate_question
+from quiz.services.question import generate_question, get_user_question_key, play_song
+from quiz.services.room import process_room_event
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -12,7 +17,9 @@ class QuestionView(APIView):
         user = request.user
         playlist_id = request.query_params.get("playlist_id")
         device_id = request.query_params.get("device_id")
-        mode = request.query_params.get("mode")
+        room_name = request.query_params.get("room_name")
+        timer = request.query_params.get("timer")
+        mode = "casual" if room_name else request.query_params.get("mode")
 
         if not device_id:
             return JsonResponse({"error": "Device ID is required"}, status=400)
@@ -23,9 +30,28 @@ class QuestionView(APIView):
         if mode not in ["casual", "training"]:
             return JsonResponse({"error": "Invalid mode"}, status=400)
 
+        if room_name and not timer:
+            return JsonResponse({"error": "Timer is required"}, status=400)
+
         if not Playlist.objects.for_user(user).filter(spotify_id=playlist_id).exists():
             return JsonResponse({"error": "Invalid Playlist"}, status=400)
 
-        generate_question(user, device_id, playlist_id, mode)
+        song_id = generate_question(
+            user,
+            playlist_id,
+            mode,
+        )
+
+        if not room_name:
+            play_song(user, device_id, song_id)
+            cache.set(get_user_question_key(user), {"song_id": song_id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
+        else:
+            async_to_sync(process_room_event)(
+                "question_starts",
+                lambda data: {**data, "song_id": song_id, "correct_guesses": []},
+                room_name,
+                get_channel_layer(),
+                extra_data={"timer": timer, "song_id": song_id},
+            )
 
         return JsonResponse({"status": "ok"}, status=200)

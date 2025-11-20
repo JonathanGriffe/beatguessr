@@ -3,13 +3,13 @@ from collections import defaultdict
 
 import numpy as np
 from accounts.services.auth import put
-from django.core.cache import cache
 from django.db.models.expressions import Window
 from django.db.models.functions import RowNumber
 from django.utils import timezone
-from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, QUESTIONS_CACHE_TIMEOUT, WEIGHTS
+from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, WEIGHTS
 from quiz.models import Question
 from quiz.models.playlist import Playlist
+from quiz.models.song import Song
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,16 @@ def song_activation(questions):
     return 2 ** (-adjusted_time / half_life)
 
 
-def generate_question(user, device_id, playlist_id, mode):
+def play_song(user, device_id, song_id):
+    song_spotify_id = Song.objects.get(id=song_id).spotify_id
+    put(
+        f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
+        user,
+        json={"uris": [f"spotify:track:{song_spotify_id}"], "position_ms": 0},
+    )
+
+
+def generate_question(user, playlist_id, mode):
     """Logic to generate or retrieve a quiz question for the user"""
     playlist = Playlist.objects.for_user(user).get(spotify_id=playlist_id)
     activations = compute_activations(user, playlist)
@@ -103,13 +112,8 @@ def generate_question(user, device_id, playlist_id, mode):
     else:
         song = playlist.songs.order_by("?").first()
 
-    cache.set(f"question-{user.id}", {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
+    return song.id
 
-    put(
-        f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
-        user,
-        json={
-            "uris": [f"spotify:track:{song.spotify_id}"],
-            "position_ms": 0,
-        },
-    )
+
+def get_user_question_key(user):
+    return f"question-{user.id}"

@@ -1,13 +1,131 @@
-import { useSearchParams } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import './Quiz.css';
-import WebPlayback from './WebPlayback';
+import QuizInterface, { ROUND_SEPARATION_TIMER, type QuizInterfaceHandle } from './QuizInterface';
+import RoomCard from './RoomCard';
+import SettingsCard from './SettingsCard';
+import type { Settings } from './lib/types';
+import { get } from './utils/utils';
 
 function Quiz() {
+  const navigate = useNavigate();
   const [queryParams] = useSearchParams();
 
+  const player = useRef<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  const settingsRef = useRef<Settings>({
+    volume: 50,
+    roundTimer: 25,
+    mode: 'casual',
+    roomName: null,
+    deviceId: null
+  });
+
+  const interfaceRef = useRef<QuizInterfaceHandle>(null);
+
+  const startRoomQuiz = (timer: number) => {
+    const maxTimer = settingsRef.current.roomName ? timer + ROUND_SEPARATION_TIMER : undefined;
+    interfaceRef.current?.startRound(timer, maxTimer);
+  }
+
+  const setVolume = (value: number[]) => {
+    settingsRef.current.volume = value[0];
+    player.current?.setVolume(value[0] / 100);
+  }
+  const refresh = (cb: (token: string) => void) => {
+    get(`/api/accounts/refresh/`, navigate).then(res => res.json())
+      .then(data => {
+        setAccessToken(data.access_token);
+        cb(data.access_token);
+      })
+  }
+
+  const endRoundCallback = () => {
+    startRound()
+  }
+
+  const startRound = () => {
+    const mode = settingsRef.current.roomName ? 'casual' : settingsRef.current.mode;
+    let url = `/api/quiz/question/?device_id=${settingsRef.current.deviceId}&playlist_id=${queryParams.get("playlist_id")}&mode=${mode}`
+    if (settingsRef.current.roomName) {
+      url += `&room_name=${settingsRef.current.roomName}&timer=${settingsRef.current.roundTimer}`
+    }
+    get(url, navigate).then((res) => {
+      res.status === 200 && !settingsRef.current.roomName && interfaceRef.current?.startRound(settingsRef.current.roundTimer);
+    })
+  }
+
+  useEffect(() => {
+    let script: HTMLScriptElement | null = null;
+    const initSpotifyPlayer = async () => {
+      if (!window.Spotify) {
+        console.log("adding script");
+        script = document.createElement("script");
+        script.src = "https://sdk.scdn.co/spotify-player.js";
+        script.async = true;
+
+        document.body.appendChild(script);
+      }
+
+      await new Promise<void>(resolve => {
+        if (window.Spotify) return resolve();
+        window.onSpotifyWebPlaybackSDKReady = resolve;
+      })
+
+      const spotifyPlayer = new window.Spotify.Player({
+        name: 'Web Playback SDK',
+        getOAuthToken: (cb: (token: string) => void): void => { (refresh(cb)); },
+        volume: 0.5
+      });
+
+      player.current = spotifyPlayer;
+
+
+      spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
+        console.log('Ready with Device ID', device_id);
+        settingsRef.current.deviceId = device_id;
+        startRound();
+      });
+
+      spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+        console.log('Device ID has gone offline', device_id);
+      });
+
+      spotifyPlayer.connect();
+
+    }
+
+    initSpotifyPlayer();
+
+    return () => {
+      console.log("END !")
+      if (player.current) {
+        player.current.disconnect();
+        player.current.removeListener('ready');
+        player.current.removeListener('not_ready');
+      }
+
+      if (script) {
+        script.parentNode?.removeChild(script);
+      }
+      delete player.current;
+      delete window.Spotify;
+      delete window.onSpotifyWebPlaybackSDKReady;
+    }
+  }, []);
+
   return (
-    <div className="flex items-center justify-center h-full">
-      <WebPlayback playlist_id={queryParams.get("playlist_id")} />
+    <div className='w-full h-full flex-1 relative flex items-center justify-center'>
+      <div className="absolute top-0 left-0 p-20">
+        <SettingsCard settingsRef={settingsRef} setVolume={setVolume} />
+      </div>
+      <div className="absolute top-0 right-0 p-20">
+        <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} />
+      </div>
+      {accessToken &&
+        <QuizInterface accessToken={accessToken} roundEndCallback={endRoundCallback} ref={interfaceRef} />
+      }
     </div>
   );
 }
