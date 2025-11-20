@@ -2,6 +2,7 @@ name: Tag and Build
 
 on:
   push:
+  workflow_dispatch:
     branches:
       - main
       - prod
