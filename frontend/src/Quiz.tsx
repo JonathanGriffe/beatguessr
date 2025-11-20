@@ -10,7 +10,7 @@ import { get } from './utils/utils';
 function Quiz() {
   const navigate = useNavigate();
   const [queryParams] = useSearchParams();
-
+  const playlistId = useRef(queryParams.get("playlist_id"));
   const player = useRef<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
@@ -18,9 +18,11 @@ function Quiz() {
     volume: 50,
     roundTimer: 25,
     mode: 'casual',
-    roomName: null,
-    deviceId: null
+    roomName: queryParams.get("room"),
+    deviceId: null,
   });
+
+
 
   const interfaceRef = useRef<QuizInterfaceHandle>(null);
 
@@ -47,7 +49,7 @@ function Quiz() {
 
   const startRound = () => {
     const mode = settingsRef.current.roomName ? 'casual' : settingsRef.current.mode;
-    let url = `/api/quiz/question/?device_id=${settingsRef.current.deviceId}&playlist_id=${queryParams.get("playlist_id")}&mode=${mode}`
+    let url = `/api/quiz/question/?device_id=${settingsRef.current.deviceId}&playlist_id=${playlistId.current}&mode=${mode}`
     if (settingsRef.current.roomName) {
       url += `&room_name=${settingsRef.current.roomName}&timer=${settingsRef.current.roundTimer}`
     }
@@ -85,7 +87,9 @@ function Quiz() {
       spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
         console.log('Ready with Device ID', device_id);
         settingsRef.current.deviceId = device_id;
-        startRound();
+        if (!settingsRef.current.roomName) {
+          startRound();
+        }
       });
 
       spotifyPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
