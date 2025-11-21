@@ -7,9 +7,10 @@ import type { Settings } from "./lib/types";
 export interface SettingsCardProps {
     settingsRef: React.RefObject<Settings>;
     setVolume: (value: number[]) => void;
+    roomStatus: string;
 
 }
-export default function SettingsCard({ settingsRef, setVolume }: SettingsCardProps) {
+export default function SettingsCard({ settingsRef, setVolume, roomStatus }: SettingsCardProps) {
     const [roundTimerValue, setRoundTimerValue] = useState(settingsRef.current.roundTimer ?? 25);
     const [modeValue, setModeValue] = useState(settingsRef.current.mode ?? 'casual');
     const bubbleRef = useRef<HTMLDivElement>(null);
@@ -55,30 +56,36 @@ export default function SettingsCard({ settingsRef, setVolume }: SettingsCardPro
                     onValueChange={setVolume}
                 />
             </div>
-            <div className="w-full flex flex-col justify-center items-center relative pb-7">
-                <div className="flex w-full justify-between items-end" ref={trackRef}>
-                    <span>10</span>
-                    <span className="font-light text-md mb-1">Quiz timer</span>
-                    <span>60</span>
-                </div>
-                <Slider
-                    defaultValue={[settingsRef.current.roundTimer]}
-                    min={10}
-                    max={60}
-                    step={5}
-                    onValueChange={(v) => {
-                        const newVal = v[0];
-                        setRoundTimerValue(newVal);
-                        settingsRef.current.roundTimer = newVal;
-                        updateBubble(newVal);
-                    }}
-                />
-                <div ref={bubbleRef} className="absolute bottom-0">{roundTimerValue}</div>
-            </div>
-            <ButtonGroup>
-                <Button className={buttonStyle(modeValue === "casual")} onClick={() => setMode('casual')}>Casual</Button>
-                <Button className={buttonStyle(modeValue === "training")} onClick={() => setMode('training')}>Training</Button>
-            </ButtonGroup>
+            {
+                roomStatus !== 'follower' &&
+                <>
+                    <div className="w-full flex flex-col justify-center items-center relative pb-7">
+                        <div className="flex w-full justify-between items-end" ref={trackRef}>
+                            <span>10</span>
+                            <span className="font-light text-md mb-1">Quiz timer</span>
+                            <span>60</span>
+                        </div>
+                        <Slider
+                            defaultValue={[settingsRef.current.roundTimer]}
+                            min={10}
+                            max={60}
+                            step={5}
+                            onValueChange={(v) => {
+                                const newVal = v[0];
+                                setRoundTimerValue(newVal);
+                                settingsRef.current.roundTimer = newVal;
+                                updateBubble(newVal);
+                            }}
+                        />
+                        <div ref={bubbleRef} className="absolute bottom-0">{roundTimerValue}</div>
+
+                    </div></>
+            }
+            {roomStatus === 'none' &&
+                <ButtonGroup>
+                    <Button className={buttonStyle(modeValue === "casual")} onClick={() => setMode('casual')}>Casual</Button>
+                    <Button className={buttonStyle(modeValue === "training")} onClick={() => setMode('training')}>Training</Button>
+                </ButtonGroup>}
         </div >
     )
 }

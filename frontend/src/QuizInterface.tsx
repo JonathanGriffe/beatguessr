@@ -1,5 +1,5 @@
 import { Check, CirclePlus, Pause, Play, Plus } from 'lucide-react';
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref, type RefObject } from 'react';
 import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
 import TrackCard from './TrackCard';
@@ -22,7 +22,7 @@ export type QuizInterfaceHandle = {
   startRound: (timer: number, totalTimer?: number) => void;
 };
 
-function QuizInterface(props: { accessToken: string, roundEndCallback: () => void, ref: Ref<QuizInterfaceHandle> }) {
+function QuizInterface(props: { accessToken: string, roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string }) {
   const navigate = useNavigate();
 
   const [text, setText] = useState("");
@@ -147,7 +147,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: () => voi
         setAnswerStatus(status);
         clearTimeout(answerStatusTimerId.current);
         answerStatusTimerId.current = setTimeout(() => setAnswerStatus('default'), 3000);
-        if (data.is_artist_correct && data.is_title_correct) {
+        if (data.song.spotify_id) {
           endRound(data.song);
         } else {
           setTrack(data.song || {});
@@ -166,7 +166,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: () => voi
       startTimer(timerRemaining.current);
       timerStart.current = Date.now();
       timeoutRef.current = setTimeout(() => {
-        props.roundEndCallback();
+        props.roundEndCallback.current();
       }, timerRemaining.current);
     }
     setPlaying((prev) => !prev);
@@ -212,7 +212,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: () => voi
     startTimer(roundEndTimer);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
-      props.roundEndCallback();
+      props.roundEndCallback.current();
     }, roundEndTimer);
   }
 
@@ -237,7 +237,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: () => voi
             </div>
             <div className="cursor-pointer">
               {
-                playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+                props.roomStatus != 'follower' && (playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />)
               }
             </div>
             <DropdownMenu>
@@ -257,7 +257,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: () => voi
       </div>
       <TrackCard track={track} />
       <div className="flex flex-col items-center h-1/3">
-        <p>{isQuestion ? "Next round in" : "Rounds ends in"}</p>
+        <p>{!isQuestion ? "Next round in" : "Round ends in"}</p>
         <p className="text-greenblue font-bold text-4xl">{timer}</p>
       </div>
       <div className="w-full">

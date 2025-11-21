@@ -13,7 +13,9 @@ function Quiz() {
   const playlistId = useRef(queryParams.get("playlist_id"));
   const player = useRef<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [roomStatus, setRoomStatus] = useState<'none' | 'leader' | 'follower'>('none');
 
+  const endRoundCallback = useRef(() => { });
   const settingsRef = useRef<Settings>({
     volume: 50,
     roundTimer: 25,
@@ -43,9 +45,6 @@ function Quiz() {
       })
   }
 
-  const endRoundCallback = () => {
-    startRound()
-  }
 
   const startRound = () => {
     const mode = settingsRef.current.roomName ? 'casual' : settingsRef.current.mode;
@@ -61,6 +60,9 @@ function Quiz() {
   useEffect(() => {
     let script: HTMLScriptElement | null = null;
     const initSpotifyPlayer = async () => {
+      if (settingsRef.current.roomName) {
+        setRoomStatus('follower');
+      }
       if (!window.Spotify) {
         console.log("adding script");
         script = document.createElement("script");
@@ -88,6 +90,7 @@ function Quiz() {
         console.log('Ready with Device ID', device_id);
         settingsRef.current.deviceId = device_id;
         if (!settingsRef.current.roomName) {
+          endRoundCallback.current = startRound;
           startRound();
         }
       });
@@ -122,13 +125,15 @@ function Quiz() {
   return (
     <div className='w-full h-full flex-1 relative flex items-center justify-center'>
       <div className="absolute top-0 left-0 p-20">
-        <SettingsCard settingsRef={settingsRef} setVolume={setVolume} />
+        <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
       </div>
       <div className="absolute top-0 right-0 p-20">
-        <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} />
+        {
+          player && <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
+        }
       </div>
       {accessToken &&
-        <QuizInterface accessToken={accessToken} roundEndCallback={endRoundCallback} ref={interfaceRef} />
+        <QuizInterface accessToken={accessToken} roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} />
       }
     </div>
   );

@@ -21,7 +21,7 @@ type QuestionStartsEvent = {
 
 type Event = ScoreEvent | QuestionStartsEvent;
 
-export default function RoomCard({ settingsRef, startRound }: { settingsRef: React.RefObject<Settings>, startRound: (timer: number) => void }) {
+export default function RoomCard({ settingsRef, startRound, enterRoom }: { settingsRef: React.RefObject<Settings>, startRound: (timer: number) => void, enterRoom: () => void }) {
     const [roomName, setRoomName] = useState<string | null>(settingsRef.current.roomName);
     const [scores, setScores] = useState<Record<string, number>>({});
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
@@ -34,6 +34,7 @@ export default function RoomCard({ settingsRef, startRound }: { settingsRef: Rea
                 res.json().then(data => {
                     settingsRef.current.roomName = data.room_name;
                     setRoomName(data.room_name);
+                    enterRoom();
                 })
             }
         })
@@ -62,7 +63,7 @@ export default function RoomCard({ settingsRef, startRound }: { settingsRef: Rea
         return () => {
             socket.close();
         }
-    }, [roomName])
+    }, [roomName, settingsRef.current.deviceId])
 
     return (
         <div className="h-60 w-110 border-5 border-cred rounded-xl flex flex-col justify-center items-center p-5 gap-5 text-darkblue font-bold relative">
