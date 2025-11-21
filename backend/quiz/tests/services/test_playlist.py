@@ -1,14 +1,13 @@
 from unittest.mock import mock_open, patch
 
 import pytest
+from accounts.services.auth import get
 from quiz.models.playlist import Playlist
 from quiz.models.song import Song
 from quiz.services.playlist import create_playlists
 
 TEST_PLAYLIST_ID = "25Li3GPIL8xkoB5FCRedrv"
-TEST_PLAYLIST_LENGTH = 27
 TEST_LONG_PLAYLIST_ID = "2nTFuPsJjtf5eah07KaKKw"
-TEST_LONG_PLAYLIST_LENGTH = 340
 
 
 @patch("json.load", return_value={"test": [TEST_PLAYLIST_ID]})
@@ -21,9 +20,12 @@ def test_create_playlist(open, load):
     assert playlist
     assert playlist.category == "test"
 
-    assert Song.objects.count() == TEST_PLAYLIST_LENGTH
+    playlist_length = get(f"https://api.spotify.com/v1/playlists/{playlist.spotify_id}").json()
+    print(playlist_length)
+    playlist_length = playlist_length["tracks"]["total"]
+    assert Song.objects.count() == playlist_length
 
-    assert playlist.songs.count() == TEST_PLAYLIST_LENGTH
+    assert playlist.songs.count() == playlist_length
 
 
 @patch("json.load", return_value={"test": [TEST_PLAYLIST_ID]})
@@ -36,7 +38,8 @@ def test_create_playlist_already_created(open, load):
     playlist = Playlist.objects.get(spotify_id=TEST_PLAYLIST_ID)
     assert playlist
 
-    assert Song.objects.count() == TEST_PLAYLIST_LENGTH
+    playlist_length = get(f"https://api.spotify.com/v1/playlists/{playlist.spotify_id}").json()["tracks"]["total"]
+    assert Song.objects.count() == playlist_length
 
 
 @patch("json.load", return_value={"test": [TEST_LONG_PLAYLIST_ID]})
@@ -48,9 +51,10 @@ def test_create_long_playlist(open, load):
     playlist = Playlist.objects.get()
     assert playlist
 
-    assert Song.objects.count() == TEST_LONG_PLAYLIST_LENGTH
+    playlist_length = get(f"https://api.spotify.com/v1/playlists/{playlist.spotify_id}").json()["tracks"]["total"]
+    assert Song.objects.count() == playlist_length
 
-    assert playlist.songs.count() == TEST_LONG_PLAYLIST_LENGTH
+    assert playlist.songs.count() == playlist_length
 
 
 @patch("json.load", return_value={"test": [TEST_LONG_PLAYLIST_ID, TEST_PLAYLIST_ID]})
@@ -60,5 +64,7 @@ def test_create_multiple_playlists(open, load):
     create_playlists()
 
     assert Playlist.objects.count() == 2
-
-    assert TEST_LONG_PLAYLIST_LENGTH < Song.objects.count() <= TEST_LONG_PLAYLIST_LENGTH + TEST_PLAYLIST_LENGTH
+    playlist, long_playlist = Playlist.objects.all().values_list("spotify_id", flat=True)
+    playlist_length = get(f"https://api.spotify.com/v1/playlists/{playlist}").json()["tracks"]["total"]
+    long_playlist_length = get(f"https://api.spotify.com/v1/playlists/{long_playlist}").json()["tracks"]["total"]
+    assert long_playlist_length < Song.objects.count() <= long_playlist_length + playlist_length
