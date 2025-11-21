@@ -44,7 +44,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
             return
         if self.scope["user"].id == room_data["user_id"]:
             cache.delete(get_room_key(self.room_name))
-            self.channel_layer.group_send(self.room_name, {"type": "room_closed"})
+            await self.channel_layer.group_send(self.room_name, {"type": "room_closed"})
         else:
             await process_room_event(
                 "player_leaves",

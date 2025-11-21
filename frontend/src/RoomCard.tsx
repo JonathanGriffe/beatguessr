@@ -22,7 +22,7 @@ type QuestionStartsEvent = {
 type Event = ScoreEvent | QuestionStartsEvent;
 
 export default function RoomCard({ settingsRef, startRound }: { settingsRef: React.RefObject<Settings>, startRound: (timer: number) => void }) {
-    const [roomName, setRoomName] = useState<string | null>(null);
+    const [roomName, setRoomName] = useState<string | null>(settingsRef.current.roomName);
     const [scores, setScores] = useState<Record<string, number>>({});
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
 

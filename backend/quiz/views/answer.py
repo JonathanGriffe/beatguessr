@@ -28,14 +28,14 @@ class AnswerView(APIView):
         question_data = cache.get(question_key)
         song = Song.objects.get(id=question_data["song_id"])
 
-        is_title_correct, is_artist_correct = check_answer(song, answer) if answer else (False, False)
-        is_title_correct = is_title_correct or question_data.get("is_title_correct", False)
-        is_artist_correct = is_artist_correct or question_data.get("is_artist_correct", False)
+        is_title_guess_correct, is_artist_guess_correct = check_answer(song, answer) if answer else (False, False)
+        is_title_correct = is_title_guess_correct or question_data.get("is_title_correct", False)
+        is_artist_correct = is_artist_guess_correct or question_data.get("is_artist_correct", False)
         answered_correctly = is_title_correct and is_artist_correct
 
         resp = {
-            "is_title_correct": is_title_correct,
-            "is_artist_correct": is_artist_correct,
+            "is_title_correct": is_title_guess_correct,
+            "is_artist_correct": is_artist_guess_correct,
         }
 
         if give_up or answered_correctly:
