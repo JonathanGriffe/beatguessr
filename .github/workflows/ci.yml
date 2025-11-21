@@ -20,6 +20,7 @@ jobs:
       POSTGRES_HOST: localhost
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_TEST_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_TEST_CLIENT_SECRET }}
+      REDIS_HOST: localhost
 
     services:
       postgres:
@@ -35,6 +36,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
     - name: Checkout code
@@ -45,7 +55,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install uv
         cd backend
-        export DJANGO_SETTINGS_MODULE=core.dev
         uv export --format requirements.txt --no-hashes | pip install --no-cache-dir -r /dev/stdin
 
     - name: Run migrations
