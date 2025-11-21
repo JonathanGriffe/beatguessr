@@ -1,60 +1,60 @@
 import pytest
 from accounts.models import CustomUser
+from django.core.cache import cache
+from quiz.constants import QUESTIONS_CACHE_TIMEOUT
 from quiz.models.question import Question
 from quiz.models.song import Song
+from quiz.services.question import get_user_question_key
 from rest_framework.test import APIClient
 
 
 @pytest.mark.django_db
-def test_answer_view_post():
+@pytest.mark.parametrize(
+    ("post_data", "response"),
+    [
+        (
+            {"text": "title artist"},
+            {
+                "is_title_correct": True,
+                "is_artist_correct": True,
+                "song": {"title": "title - abc", "artist": "artist", "image_link": "", "spotify_id": ""},
+            },
+        ),
+        ({"text": "abc"}, {"is_title_correct": False, "is_artist_correct": False}),
+        ({"text": "artist"}, {"is_title_correct": False, "is_artist_correct": True, "song": {"artist": "artist"}}),
+        ({"text": "title"}, {"is_title_correct": True, "is_artist_correct": False, "song": {"title": "title - abc"}}),
+        (
+            {"give_up": True},
+            {
+                "is_title_correct": False,
+                "is_artist_correct": False,
+                "song": {"title": "title - abc", "artist": "artist", "image_link": "", "spotify_id": ""},
+            },
+        ),
+    ],
+)
+@pytest.mark.parametrize("mode", ["training", "casual"])
+def test_answer_view_post(mode, post_data, response):
     user = CustomUser.objects.create_user("test", "test")
     song = Song.objects.create(title="title - abc", artist="artist", image_link="", spotify_id="", popularity=0)
-    question = Question.objects.create(song=song, user=user)
+    cache.set(get_user_question_key(user), {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
 
     client = APIClient()
     client.force_authenticate(user=user)
 
-    data = {"text": "title", "question_id": question.id}
-
-    response = client.post(
+    res = client.post(
         "/quiz/answer/",
-        data,
+        post_data,
         content_type="application/json",
     )
 
-    assert response.status_code == 200
-    assert response.json() == {
-        "is_title_correct": True,
-        "is_artist_correct": False,
-        "song": {"title": "title - abc"},
-    }
+    assert res.status_code == 200
+    assert res.json() == response
 
-    question.refresh_from_db()
-    assert question.answered_correctly is False
-    assert question.title_found is True
-    assert question.artist_found is False
-
-    data = {"text": "artist", "question_id": question.id}
-
-    response = client.post(
-        "/quiz/answer/",
-        data,
-        content_type="application/json",
-    )
-
-    assert response.status_code == 200
-    assert response.json() == {
-        "is_title_correct": True,
-        "is_artist_correct": True,
-        "song": {
-            "artist": "artist",
-            "title": "title - abc",
-            "image_link": "",
-            "spotify_id": "",
-        },
-    }
-
-    question.refresh_from_db()
-    assert question.answered_correctly is True
-    assert question.artist_found is True
-    assert question.title_found is True
+    if mode == "training" and (
+        "give_up" in post_data or (response["is_title_correct"] and response["is_artist_correct"])
+    ):
+        question = Question.objects.get(user=user, song=song)
+        assert question.answered_correctly == (response["is_title_correct"] and response["is_artist_correct"])
+    else:
+        assert not Question.objects.filter(user=user, song=song).exists()
