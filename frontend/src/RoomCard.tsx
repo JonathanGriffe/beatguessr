@@ -62,7 +62,7 @@ export default function RoomCard({ settingsRef, startRound }: { settingsRef: Rea
         return () => {
             socket.close();
         }
-    }, [roomName])
+    }, [roomName, settingsRef.current.deviceId])
 
     return (
         <div className="h-60 w-110 border-5 border-cred rounded-xl flex flex-col justify-center items-center p-5 gap-5 text-darkblue font-bold relative">
