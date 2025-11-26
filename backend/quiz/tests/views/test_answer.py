@@ -37,7 +37,7 @@ from rest_framework.test import APIClient
 def test_answer_view_post(mode, post_data, response):
     user = CustomUser.objects.create_user("test", "test")
     song = Song.objects.create(title="title - abc", artist="artist", image_link="", spotify_id="", popularity=0)
-    cache.set(get_user_question_key(user), {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
+    cache.set(get_user_question_key(user.id), {"song_id": song.id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
 
     client = APIClient()
     client.force_authenticate(user=user)

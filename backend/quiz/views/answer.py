@@ -10,21 +10,24 @@ from quiz.models.song import Song
 from quiz.services.answer import check_answer, compute_score
 from quiz.services.question import get_user_question_key
 from quiz.services.room import process_room_event
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
 
 class AnswerView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
         user = request.user
+        guest_username = request.session.get("guest_username")
         answer = request.data.get("text")
         give_up = request.data.get("give_up", False)
+        if not user.is_authenticated and not guest_username:
+            return JsonResponse({"error": "User not authenticated"}, status=401)
 
-        question_key = get_user_question_key(user)
+        user_id = guest_username or user.id
+        username = guest_username or user.name
+
+        question_key = get_user_question_key(user_id)
         question_data = cache.get(question_key)
         song = Song.objects.get(id=question_data["song_id"])
 
@@ -47,10 +50,10 @@ class AnswerView(APIView):
             elif question_data["mode"] == "room" and answered_correctly:
                 async_to_sync(process_room_event)(
                     "player_guessed",
-                    compute_score(user),
+                    compute_score(username),
                     question_data["room_name"],
                     get_channel_layer(),
-                    user.name,
+                    username,
                 )
 
             resp["song"] = {
@@ -82,7 +85,7 @@ class AnswerView(APIView):
         logger.info(
             "User made a guess",
             extra={
-                "user_id": user.id,
+                "user_id": user_id,
                 "text": answer,
                 "give_up": give_up,
                 "song_id": question_data["song_id"],

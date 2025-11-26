@@ -54,13 +54,13 @@ def check_answer(song, answer):
     )
 
 
-def compute_score(user):
+def compute_score(username):
     def update_score(room_data):
-        if user.name in room_data["correct_guesses"]:
+        if username in room_data["correct_guesses"]:
             return
 
-        room_data["scores"][user.name] += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), MINIMUM_REWARD)
-        room_data["correct_guesses"].append(user.name)
+        room_data["scores"][username] += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), MINIMUM_REWARD)
+        room_data["correct_guesses"].append(username)
 
         return room_data
 

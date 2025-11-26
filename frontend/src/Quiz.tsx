@@ -26,6 +26,7 @@ function Quiz() {
     mode: 'casual',
     roomName: queryParams.get("room"),
     deviceId: null,
+    guestUsername: queryParams.get("username")
   });
 
 
@@ -63,6 +64,16 @@ function Quiz() {
 
   useEffect(() => {
     let script: HTMLScriptElement | null = null;
+
+    if (settingsRef.current.guestUsername) {
+      get(`/api/accounts/guest_user/?guest_username=${settingsRef.current.guestUsername}`, navigate).then(() => {
+        setRoomStatus('follower');
+        setIsReady(true);
+        setPlaying(true);
+      });
+      return;
+    }
+
     const initSpotifyPlayer = async () => {
       if (settingsRef.current.roomName) {
         setRoomStatus('follower');
@@ -129,20 +140,23 @@ function Quiz() {
 
   return (
     <div className='w-full h-full flex-1 relative flex items-center justify-center'>
-      <div className="absolute top-0 left-0 p-20">
-        <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
-      </div>
-      <div className="absolute top-0 right-0 p-20">
-        {
-          isReady && <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
-        }
-      </div>
-      {(accessToken && isReady) && playing ?
+      {!settingsRef.current.guestUsername &&
+        <div className="absolute top-0 left-0 p-20">
+          <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
+        </div>
+      }
+      {
+        isReady && <div className="absolute top-0 right-0 p-20">
+          <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
+
+        </div>
+      }
+      {isReady && (playing ?
         <QuizInterface accessToken={accessToken} roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} />
         : <Button onClick={() => { setPlaying(true); startRound() }} className="hover:cursor-pointer bg-darkblue size-60">
           <Play className="size-full" />
         </Button>
-      }
+      )}
     </div>
   );
 }

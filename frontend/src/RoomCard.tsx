@@ -75,7 +75,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
                         <Table className="flex-1 w-full">
                             <TableBody className="bg-muted/50">
                                 {
-                                    Object.entries(scores).map(([name, score]) => {
+                                    Object.entries(scores).sort((a, b) => b[1] - a[1]).map(([name, score]) => {
                                         return (
                                             <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green-300" : ""}>
                                                 <TableCell>{name}</TableCell>

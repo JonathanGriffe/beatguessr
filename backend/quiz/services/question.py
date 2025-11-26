@@ -115,5 +115,5 @@ def generate_question(user, playlist_id, mode):
     return song.id
 
 
-def get_user_question_key(user):
-    return f"question-{user.id}"
+def get_user_question_key(user_id):
+    return f"question-{user_id}"

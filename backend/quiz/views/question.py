@@ -44,7 +44,7 @@ class QuestionView(APIView):
 
         if not room_name:
             play_song(user, device_id, song_id)
-            cache.set(get_user_question_key(user), {"song_id": song_id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
+            cache.set(get_user_question_key(user.id), {"song_id": song_id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
         else:
             async_to_sync(process_room_event)(
                 "question_starts",

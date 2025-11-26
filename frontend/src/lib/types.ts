@@ -11,6 +11,7 @@ export interface Settings {
     mode: 'casual' | 'training';
     roomName: string | null;
     deviceId: string | null;
+    guestUsername: string | null;
 }
 
 export interface SpotifyPlaylist {

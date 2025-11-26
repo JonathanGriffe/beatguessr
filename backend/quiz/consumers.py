@@ -17,13 +17,14 @@ class RoomConsumer(AsyncWebsocketConsumer):
         qs = parse_qs(self.scope["query_string"].decode())
         user = self.scope["user"]
         room_name = self.scope["url_route"]["kwargs"]["room_name"]
+        guest_username = self.scope["session"].get("guest_username")
         self.device_id = qs.get("device_id")[0]
         self.room_name = room_name
-        if not room_name or not user or not self.device_id:
+        if not room_name or not user or (not self.device_id and not guest_username):
             await self.close()
         room_data = cache.get(get_room_key(room_name))
 
-        if not user.is_authenticated or not room_data:
+        if (not user.is_authenticated and not guest_username) or not room_data:
             await self.close()
 
         await self.accept()
@@ -32,17 +33,17 @@ class RoomConsumer(AsyncWebsocketConsumer):
         logger.info("User joined room", extra={"room_name": room_name, "user_id": user.id})
         await process_room_event(
             "player_joins",
-            lambda data: {**data, "scores": {**data["scores"], user.name: 0}},
+            lambda data: {**data, "scores": {**data["scores"], guest_username or user.name: 0}},
             self.room_name,
             self.channel_layer,
-            user.name,
+            guest_username or user.name,
         )
 
     async def disconnect(self, close_code):
         room_data = cache.get(get_room_key(self.room_name))
         if not room_data:
             return
-        if self.scope["user"].id == room_data["user_id"]:
+        if self.scope["user"].is_authenticated and self.scope["user"].id == room_data["user_id"]:
             cache.delete(get_room_key(self.room_name))
             await self.channel_layer.group_send(self.room_name, {"type": "room_closed"})
         else:
@@ -54,7 +55,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 },
                 self.room_name,
                 self.channel_layer,
-                self.scope["user"].name,
+                self.scope["session"].get("guest_username") or self.scope["user"].name,
             )
 
             await self.channel_layer.group_discard(self.room_name, self.channel_name)
@@ -66,9 +67,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
     async def question_starts(self, event):
-        await sync_to_async(play_song)(self.scope["user"], self.device_id, event["song_id"])
+        if self.scope["user"].is_authenticated:
+            await sync_to_async(play_song)(self.scope["user"], self.device_id, event["song_id"])
         cache.set(
-            get_user_question_key(self.scope["user"]),
+            get_user_question_key(self.scope["session"].get("guest_username") or self.scope["user"].id),
             {"song_id": event["song_id"], "mode": "room", "room_name": self.room_name},
             QUESTIONS_CACHE_TIMEOUT,
         )

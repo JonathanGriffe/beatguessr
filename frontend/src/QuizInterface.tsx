@@ -22,7 +22,7 @@ export type QuizInterfaceHandle = {
   startRound: (timer: number, totalTimer?: number) => void;
 };
 
-function QuizInterface(props: { accessToken: string, roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string }) {
+function QuizInterface(props: { accessToken: string | null, roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string }) {
   const navigate = useNavigate();
 
   const [text, setText] = useState("");
@@ -217,6 +217,9 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: RefObject
   }
 
   useEffect(() => {
+    if (!props.accessToken) {
+      return;
+    }
     getUserData();
   }, [props.accessToken])
 
@@ -225,7 +228,7 @@ function QuizInterface(props: { accessToken: string, roundEndCallback: RefObject
 
     <div className="flex flex-col w-full items-center p-20 gap-6">
       <div className="w-140 h-30">
-        {!isQuestion && timerLength ?
+        {!isQuestion && timerLength && props.accessToken ?
           <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
             <div className="cursor-pointer">
               {
