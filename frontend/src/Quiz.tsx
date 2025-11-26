@@ -34,7 +34,7 @@ function Quiz() {
   const interfaceRef = useRef<QuizInterfaceHandle>(null);
 
   const startRoomQuiz = (timer: number) => {
-    const maxTimer = settingsRef.current.roomName ? timer + ROUND_SEPARATION_TIMER : undefined;
+    const maxTimer = settingsRef.current.roomName ? (timer + ROUND_SEPARATION_TIMER / 1000) : undefined;
     interfaceRef.current?.startRound(timer, maxTimer);
   }
 

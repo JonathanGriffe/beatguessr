@@ -211,7 +211,7 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
     if (track.spotify_id) {
       getSongLiked(track.spotify_id);
     }
-    const roundEndTimer = totalTimer.current ? timerLength - (Date.now() - timerStart.current) + ROUND_SEPARATION_TIMER : ROUND_SEPARATION_TIMER;
+    const roundEndTimer = totalTimer.current ? totalTimer.current - (Date.now() - timerStart.current) : ROUND_SEPARATION_TIMER;
     startTimer(roundEndTimer);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
@@ -232,7 +232,7 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
     <div className="w-full h-full overflow-hidden flex items-center justify-center">
       <div className="relative flex flex-col w-full items-center pl-20 pr-20 gap-6">
         <div className="w-140 h-15 flex items-end">
-          {timerLength && props.accessToken && (!isQuestion ?
+          {props.accessToken && (!isQuestion ?
             <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
               <div className="cursor-pointer">
                 {

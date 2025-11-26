@@ -52,7 +52,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
 
             if (data.type === "question_starts") {
                 if (startRound) {
-                    startRound(data.timer);
+                    startRound(Number(data.timer));
                     setCorrectGuesses([]);
                 }
             } else {
