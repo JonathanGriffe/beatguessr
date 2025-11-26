@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
 import TrackCard from './TrackCard';
 import './WebPlayback.css';
+import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { Spinner } from './components/ui/spinner';
 import type { SpotifyPlaylist, Track } from './lib/types';
@@ -227,9 +228,9 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   return (
 
     <div className="flex flex-col w-full items-center p-20 gap-6">
-      <div className="w-140 h-30">
-        {!isQuestion && timerLength && props.accessToken ?
-          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
+      <div className="w-140 h-15 flex items-end">
+        {timerLength && props.accessToken && (!isQuestion ?
+          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
             <div className="cursor-pointer">
               {
                 songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
@@ -255,7 +256,9 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div> : ""
+          </div>
+          :
+          <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
         }
       </div>
       <TrackCard track={track} />
