@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
 import TrackCard from './TrackCard';
 import './WebPlayback.css';
+import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { Spinner } from './components/ui/spinner';
 import type { SpotifyPlaylist, Track } from './lib/types';
@@ -36,6 +37,7 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   const timerStart = useRef<number>(0);
   const timerRemaining = useRef<number>(0);
   const totalTimer = useRef<number | undefined>(undefined);
+  const [guesses, setGuesses] = useState<string[]>([]);
 
 
   const spotifyUserId = useRef<string | null>(null);
@@ -144,10 +146,11 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
     ).then(res => res.json())
       .then(data => {
         let status: 'correct' | 'wrong' = data.is_artist_correct || data.is_title_correct ? "correct" : "wrong";
+        setGuesses(prev => [text, ...prev]);
         setAnswerStatus(status);
         clearTimeout(answerStatusTimerId.current);
         answerStatusTimerId.current = setTimeout(() => setAnswerStatus('default'), 3000);
-        if (data.song.spotify_id) {
+        if (data.song?.spotify_id) {
           endRound(data.song);
         } else {
           setTrack(data.song || {});
@@ -212,6 +215,7 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
     startTimer(roundEndTimer);
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
+      setGuesses([]);
       props.roundEndCallback.current();
     }, roundEndTimer);
   }
@@ -225,53 +229,62 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
 
 
   return (
-
-    <div className="flex flex-col w-full items-center p-20 gap-6">
-      <div className="w-140 h-30">
-        {!isQuestion && timerLength && props.accessToken ?
-          <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2">
-            <div className="cursor-pointer">
-              {
-                songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
-                  <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
-                  songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
-                    <Spinner className="w-8 h-8" />
-              }
+    <div className="w-full h-full overflow-hidden flex items-center justify-center">
+      <div className="relative flex flex-col w-full items-center pl-20 pr-20 gap-6">
+        <div className="w-140 h-15 flex items-end">
+          {timerLength && props.accessToken && (!isQuestion ?
+            <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
+              <div className="cursor-pointer">
+                {
+                  songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
+                    <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
+                    songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
+                      <Spinner className="w-8 h-8" />
+                }
+              </div>
+              <div className="cursor-pointer">
+                {
+                  props.roomStatus != 'follower' && (playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />)
+                }
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Plus className="w-8 h-8 cursor-pointer" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    {
+                      spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
+                    }
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="cursor-pointer">
-              {
-                props.roomStatus != 'follower' && (playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />)
-              }
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Plus className="w-8 h-8 cursor-pointer" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuGroup>
-                  {
-                    spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
-                  }
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div> : ""
-        }
-      </div>
-      <TrackCard track={track} />
-      <div className="flex flex-col items-center h-1/3">
-        <p>{!isQuestion ? "Next round in" : "Round ends in"}</p>
-        <p className="text-greenblue font-bold text-4xl">{timer}</p>
-      </div>
-      <div className="w-full">
-        <div className="h-3 w-full rounded overflow-hidden">
-          {isQuestion ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
-        </div>
-        <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            sendResponse(text);
+            :
+            <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
           }
-        }} />
+        </div>
+        <TrackCard track={track} />
+        <div className="flex flex-col items-center h-1/3">
+          <p>{!isQuestion ? "Next round in" : "Round ends in"}</p>
+          <p className="text-greenblue font-bold text-4xl">{timer}</p>
+        </div>
+        <div className="w-full">
+          <div className="h-3 w-full rounded overflow-hidden">
+            {isQuestion ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
+          </div>
+          <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              sendResponse(text);
+            }
+          }} />
+        </div>
+        {guesses.length > 0 &&
+          <div className="absolute pt-5 top-full flex flex-col gap-1 w-140 items-center">
+            <span className='text-greenblue text-2xl'>Guesses :</span>
+            {guesses.map((guess, index) => <span key={index}>{guess}</span>)}
+          </div>
+        }
       </div>
     </div>
   );
