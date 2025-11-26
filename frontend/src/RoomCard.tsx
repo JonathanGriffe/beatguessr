@@ -53,6 +53,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
             if (data.type === "question_starts") {
                 if (startRound) {
                     startRound(data.timer);
+                    setCorrectGuesses([]);
                 }
             } else {
                 setScores(data.scores);
@@ -76,7 +77,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
                                 {
                                     Object.entries(scores).map(([name, score]) => {
                                         return (
-                                            <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green" : ""}>
+                                            <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green-300" : ""}>
                                                 <TableCell>{name}</TableCell>
                                                 <TableCell>{score}</TableCell>
                                             </TableRow>
