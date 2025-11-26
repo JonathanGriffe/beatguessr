@@ -1,9 +1,11 @@
+import { Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import './Quiz.css';
 import QuizInterface, { ROUND_SEPARATION_TIMER, type QuizInterfaceHandle } from './QuizInterface';
 import RoomCard from './RoomCard';
 import SettingsCard from './SettingsCard';
+import { Button } from './components/ui/button';
 import type { Settings } from './lib/types';
 import { get } from './utils/utils';
 
@@ -14,6 +16,8 @@ function Quiz() {
   const player = useRef<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [roomStatus, setRoomStatus] = useState<'none' | 'leader' | 'follower'>('none');
+  const [isReady, setIsReady] = useState(false);
+  const [playing, setPlaying] = useState(false);
 
   const endRoundCallback = useRef(() => { });
   const settingsRef = useRef<Settings>({
@@ -62,6 +66,7 @@ function Quiz() {
     const initSpotifyPlayer = async () => {
       if (settingsRef.current.roomName) {
         setRoomStatus('follower');
+        setPlaying(true);
       }
       if (!window.Spotify) {
         console.log("adding script");
@@ -89,9 +94,9 @@ function Quiz() {
       spotifyPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
         console.log('Ready with Device ID', device_id);
         settingsRef.current.deviceId = device_id;
+        setIsReady(true);
         if (!settingsRef.current.roomName) {
           endRoundCallback.current = startRound;
-          startRound();
         }
       });
 
@@ -129,11 +134,14 @@ function Quiz() {
       </div>
       <div className="absolute top-0 right-0 p-20">
         {
-          player && <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
+          isReady && <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
         }
       </div>
-      {accessToken &&
+      {(accessToken && isReady) && playing ?
         <QuizInterface accessToken={accessToken} roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} />
+        : <Button onClick={() => { setPlaying(true); startRound() }} className="hover:cursor-pointer bg-darkblue size-60">
+          <Play className="size-full" />
+        </Button>
       }
     </div>
   );
