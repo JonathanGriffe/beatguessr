@@ -139,14 +139,14 @@ function Quiz() {
   }, []);
 
   return (
-    <div className='w-full h-full flex-1 relative flex items-center justify-center'>
+    <div className='w-full h-full flex-1 relative flex flex-col items-center justify-center'>
       {!settingsRef.current.guestUsername &&
         <div className="absolute top-0 left-0 p-20">
           <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
         </div>
       }
       {
-        isReady && <div className="absolute top-0 right-0 p-20">
+        isReady && <div className="md:absolute md:top-0 md:right-0 md:p-20">
           <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
 
         </div>
