@@ -60,14 +60,6 @@ class AnswerView(APIView):
                 Question.objects.create(
                     user=user, song_id=question_data["song_id"], answered_correctly=answered_correctly
                 )
-            elif question_data["mode"] == "room" and answered_correctly:
-                async_to_sync(process_room_event)(
-                    "player_guessed",
-                    compute_score(username),
-                    question_data["room_name"],
-                    get_channel_layer(),
-                    username,
-                )
 
             resp["song"] = {
                 "title": song.title,
