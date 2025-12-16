@@ -19,6 +19,7 @@ class RoomView(APIView):
             {
                 "user_id": request.user.id,
                 "scores": {request.user.name: 0},
+                "partial_guesses": [],
                 "correct_guesses": [],
                 "current_song_id": None,
             },

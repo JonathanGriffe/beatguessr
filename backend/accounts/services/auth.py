@@ -28,7 +28,7 @@ def get_callback_url():
     if os.environ.get("DOMAIN_NAME"):
         return f"https://{os.environ.get('DOMAIN_NAME')}/callback/"
     else:
-        return "http://localhost:5173/callback/"
+        return f"{os.environ.get('FRONTEND_URL')}/callback/"
 
 
 def refresh_access_token(user):

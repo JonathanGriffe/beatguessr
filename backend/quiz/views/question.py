@@ -48,7 +48,7 @@ class QuestionView(APIView):
         else:
             async_to_sync(process_room_event)(
                 "question_starts",
-                lambda data: {**data, "song_id": song_id, "correct_guesses": []},
+                lambda data: {**data, "song_id": song_id, "correct_guesses": [], "partial_guesses": []},
                 room_name,
                 get_channel_layer(),
                 extra_data={"timer": timer, "song_id": song_id},
