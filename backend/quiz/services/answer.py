@@ -65,8 +65,8 @@ def compute_score(username, is_partial_guess):
         if not is_partial_guess or username in room_data["partial_guesses"]:
             if username in room_data["partial_guesses"]:
                 room_data["partial_guesses"].remove(username)
-            room_data["correct_guesses"].append(username)
             reward += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), 0)
+            room_data["correct_guesses"].append(username)
         else:
             room_data["partial_guesses"].append(username)
 
