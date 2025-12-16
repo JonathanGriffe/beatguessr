@@ -229,9 +229,9 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
 
 
   return (
-    <div className="w-full h-full overflow-hidden flex items-center justify-center">
-      <div className="relative flex flex-col w-full items-center pl-20 pr-20 gap-6">
-        <div className="w-140 h-15 flex items-end">
+    <div className="md:w-full md:h-full overflow-hidden flex items-center justify-center">
+      <div className="relative flex flex-col w-full items-center pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
+        <div className="md:w-140 md:h-15 flex items-end">
           {props.accessToken && (!isQuestion ?
             <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
               <div className="cursor-pointer">
