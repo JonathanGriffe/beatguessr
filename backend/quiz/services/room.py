@@ -26,6 +26,7 @@ async def process_room_event(event_name, update_room_func, room_name, channel_la
             "type": event_name,
             "player_name": username,
             "correct_guesses": new_room_data["correct_guesses"],
+            "partial_guesses": new_room_data["partial_guesses"],
             "scores": new_room_data["scores"],
             **extra_data,
         },

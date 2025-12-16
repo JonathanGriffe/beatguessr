@@ -36,6 +36,19 @@ class AnswerView(APIView):
         is_artist_correct = is_artist_guess_correct or question_data.get("is_artist_correct", False)
         answered_correctly = is_title_correct and is_artist_correct
 
+        # handle multiplayer
+        if question_data["mode"] == "room":
+            is_title_improved = is_title_correct and not question_data.get("is_title_correct", False)
+            is_artist_improved = is_artist_correct and not question_data.get("is_artist_correct", False)
+            if is_title_improved or is_artist_improved:
+                async_to_sync(process_room_event)(
+                    "player_guessed",
+                    compute_score(username, not (is_title_improved and is_artist_improved)),
+                    question_data["room_name"],
+                    get_channel_layer(),
+                    username,
+                )
+
         resp = {
             "is_title_correct": is_title_guess_correct,
             "is_artist_correct": is_artist_guess_correct,

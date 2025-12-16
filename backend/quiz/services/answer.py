@@ -54,13 +54,23 @@ def check_answer(song, answer):
     )
 
 
-def compute_score(username):
+def compute_score(username, is_partial_guess):
     def update_score(room_data):
         if username in room_data["correct_guesses"]:
-            return
+            raise ValueError("User already guessed")
+        if username in room_data["partial_guesses"] and not is_partial_guess:
+            raise ValueError("User already partially guessed")
 
-        room_data["scores"][username] += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), MINIMUM_REWARD)
-        room_data["correct_guesses"].append(username)
+        reward = MINIMUM_REWARD if is_partial_guess else MINIMUM_REWARD * 2
+        if not is_partial_guess or username in room_data["partial_guesses"]:
+            if username in room_data["partial_guesses"]:
+                room_data["partial_guesses"].remove(username)
+            room_data["correct_guesses"].append(username)
+            reward += REWARD_BY_PLACE.get(len(room_data["correct_guesses"]), 0)
+        else:
+            room_data["partial_guesses"].append(username)
+
+        room_data["scores"][username] += reward
 
         return room_data
 

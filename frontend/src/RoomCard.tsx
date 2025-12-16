@@ -10,6 +10,7 @@ type ScoreEvent =
         type: "player_joins" | "player_leaves" | "player_guessed",
         player_name: string | undefined | null,
         correct_guesses: string[],
+        partial_guesses: string[],
         scores: Record<string, number>,
         timer: number | null | undefined,
     }
@@ -25,6 +26,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
     const [roomName, setRoomName] = useState<string | null>(settingsRef.current.roomName);
     const [scores, setScores] = useState<Record<string, number>>({});
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
+    const [partialGuesses, setPartialGuesses] = useState<string[]>([]);
 
     const navigate = useNavigate();
 
@@ -54,10 +56,12 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
                 if (startRound) {
                     startRound(Number(data.timer));
                     setCorrectGuesses([]);
+                    setPartialGuesses([]);
                 }
             } else {
                 setScores(data.scores);
                 setCorrectGuesses(data.correct_guesses);
+                setPartialGuesses(data.partial_guesses);
             }
         }
 
@@ -77,7 +81,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
                                 {
                                     Object.entries(scores).sort((a, b) => b[1] - a[1]).map(([name, score]) => {
                                         return (
-                                            <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green-300" : ""}>
+                                            <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green-300" : (partialGuesses.includes(name) ? "bg-yellow-300" : "")}>
                                                 <TableCell>{name}</TableCell>
                                                 <TableCell>{score}</TableCell>
                                             </TableRow>

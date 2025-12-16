@@ -1,14 +1,16 @@
+import os
+
 from .settings import *  # noqa
 
 DEBUG = True
 ALLOWED_HOSTS = ["backend"]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    os.environ.get("FRONTEND_URL"),
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
+    os.environ.get("FRONTEND_URL"),
 ]
 
 CORS_ALLOW_CREDENTIALS = True
