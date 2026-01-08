@@ -38,12 +38,12 @@ function PlaylistSelector() {
         })
     }, []);
 
-    return (<div className="h-160 rounded-2xl border-8 border-cred p-4">
+    return (<div className="h-160 rounded-2xl border-8 border-lighterblue p-4 bg-beige">
         {Object.keys(categories).length > 0 &&
             <Tabs defaultValue={sortCategories(Object.keys(categories))[0]}>
-                <TabsList className="bg-greenblue">
+                <TabsList className="bg-purple-200">
                     {sortCategories(Object.keys(categories)).map((category) => (
-                        <TabsTrigger key={category} value={category} className="text-beige data-[state=active]:bg-cred">{category}</TabsTrigger>
+                        <TabsTrigger key={category} value={category} className="text-black data-[state=active]:text-white data-[state=active]:bg-lighterblue hover:cursor-pointer">{category}</TabsTrigger>
                     ))}
                 </TabsList>
                 {Object.entries(categories).map(([name, playlists]) => (
