@@ -71,11 +71,11 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
     }, [roomName, settingsRef.current.deviceId])
 
     return (
-        <div className="h-40 w-80 md:h-60 md:w-110 border-5 border-cred rounded-xl flex flex-col justify-center items-center p-2 md:p-5 gap-5 text-darkblue font-bold relative">
+        <div className="h-40 w-80 md:h-60 md:w-110 border-5 border-lighterblue rounded-xl flex flex-col justify-center items-center p-2 md:p-5 gap-5 text-darkblue font-bold relative">
             {
                 settingsRef.current.roomName ?
                     <div className="flex flex-col h-full w-full items-center">
-                        <span className="text-lg md:text-xl text-cred">Room Name: {settingsRef.current.roomName}</span>
+                        <span className="text-lg md:text-xl text-lighterblue">Room Name: {settingsRef.current.roomName}</span>
                         <Table className="flex-1 w-full">
                             <TableBody className="bg-muted/50 text-xs md:text-base">
                                 {
@@ -92,7 +92,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
                         </Table>
                     </div>
                     :
-                    <Button onClick={createRoom} className="bg-corange text-white hover:bg-cred">Create Room</Button>
+                    <Button onClick={createRoom} className="bg-purple-800 hover:bg-purple-900 hover:cursor-pointer">Create Room</Button>
             }
         </div >
     )
