@@ -7,6 +7,7 @@ class Song(models.Model):
     image_link = models.URLField(max_length=500)
     spotify_id = models.CharField(max_length=500, unique=True)
     popularity = models.IntegerField(default=0)
+    preview_url = models.URLField(max_length=500)
 
     def __str__(self):
         return f"{self.title} by {self.artist}"
