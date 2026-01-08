@@ -1,6 +1,9 @@
+import concurrent
 import json
 import logging
+import re
 
+import requests
 from accounts.services.auth import get
 from core.settings import BASE_DIR
 from quiz.constants import PLAYLIST_SIZE_LIMIT
@@ -34,17 +37,30 @@ def get_items(playlist_id, user=None):
 
 
 def import_playlist(playlist_id, category, user=None):
-    song_ids = []
     name, image_link, tracks = get_items(playlist_id, user)
-    for track in tracks:
-        song, created = Song.objects.get_or_create(
+    spotify_ids = [track["id"] for track in tracks]
+    existing_tracks = Song.objects.filter(spotify_id__in=spotify_ids).values_list("spotify_id", "id")
+    existing_track_spotify_ids = [track[0] for track in existing_tracks]
+    song_ids = [track[1] for track in existing_tracks]
+    tracks_to_add = [track for track in tracks if track["id"] not in existing_track_spotify_ids]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+
+        def add_preview_url(track):
+            track["preview_url"] = get_preview_url(track["id"])
+            return track
+
+        futures = [executor.submit(add_preview_url, track) for track in tracks_to_add]
+        enriched_tracks = [future.result() for future in concurrent.futures.as_completed(futures)]
+
+    for track in enriched_tracks:
+        song = Song.objects.create(
             spotify_id=track["id"],
-            defaults={
-                "title": track["name"],
-                "artist": track["artists"][0]["name"],
-                "image_link": track["album"]["images"][0]["url"],
-                "popularity": track["popularity"],
-            },
+            title=track["name"],
+            artist=track["artists"][0]["name"],
+            image_link=track["album"]["images"][0]["url"],
+            popularity=track["popularity"],
+            preview_url=track["preview_url"],
         )
         song_ids.append(song.id)
 
@@ -54,6 +70,13 @@ def import_playlist(playlist_id, category, user=None):
     playlist.songs.set(song_ids)
 
     return playlist
+
+
+def get_preview_url(spotify_id):
+    res = requests.get(f"https://open.spotify.com/track/{spotify_id}")
+    url_regex = re.compile(r"https\:\/\/p\.scdn\.co\/mp3-preview\/[a-z0-9]{30,50}")
+    url = url_regex.search(res.text)
+    return url.group()
 
 
 def import_playlist_for_user(playlist_id, user):
