@@ -4,7 +4,8 @@ from django.core.cache import cache
 from django.http import JsonResponse
 from quiz.constants import QUESTIONS_CACHE_TIMEOUT
 from quiz.models.playlist import Playlist
-from quiz.services.question import generate_question, get_user_question_key, play_song
+from quiz.models.song import Song
+from quiz.services.question import generate_question, get_user_question_key
 from quiz.services.room import process_room_event
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -16,13 +17,9 @@ class QuestionView(APIView):
     def get(self, request):
         user = request.user
         playlist_id = request.query_params.get("playlist_id")
-        device_id = request.query_params.get("device_id")
         room_name = request.query_params.get("room_name")
         timer = request.query_params.get("timer")
         mode = "casual" if room_name else request.query_params.get("mode")
-
-        if not device_id:
-            return JsonResponse({"error": "Device ID is required"}, status=400)
 
         if not playlist_id:
             return JsonResponse({"error": "Playlist is required"}, status=400)
@@ -42,16 +39,27 @@ class QuestionView(APIView):
             mode,
         )
 
+        preview_url = Song.objects.get(id=song_id).preview_url
+
         if not room_name:
-            play_song(user, device_id, song_id)
             cache.set(get_user_question_key(user.id), {"song_id": song_id, "mode": mode}, QUESTIONS_CACHE_TIMEOUT)
         else:
             async_to_sync(process_room_event)(
                 "question_starts",
-                lambda data: {**data, "song_id": song_id, "correct_guesses": [], "partial_guesses": []},
+                lambda data: {
+                    **data,
+                    "song_id": song_id,
+                    "correct_guesses": [],
+                    "partial_guesses": [],
+                },
                 room_name,
                 get_channel_layer(),
-                extra_data={"timer": timer, "song_id": song_id},
+                extra_data={"timer": timer, "song_id": song_id, "preview_url": preview_url},
             )
 
-        return JsonResponse({"status": "ok"}, status=200)
+        return JsonResponse(
+            {
+                "preview_url": preview_url,
+            },
+            status=200,
+        )

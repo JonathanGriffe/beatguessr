@@ -2,14 +2,12 @@ import logging
 from collections import defaultdict
 
 import numpy as np
-from accounts.services.auth import put
 from django.db.models.expressions import Window
 from django.db.models.functions import RowNumber
 from django.utils import timezone
 from quiz.constants import LEARNED_THRESHOLD, MIN_HALF_LIFE, PRACTICE_THRESHOLD, WEIGHTS
 from quiz.models import Question
 from quiz.models.playlist import Playlist
-from quiz.models.song import Song
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +51,7 @@ def pick_song(activation_by_song, playlist):
         "Selecting new song",
         extra={
             "song_id": song_id,
+            "preview_url": song.preview_url,
             "song_title": song.title,
             "song_artist": song.artist,
             "song_popularity": song.popularity,
@@ -91,15 +90,6 @@ def song_activation(questions):
         "position"
     ] / 100
     return 2 ** (-adjusted_time / half_life)
-
-
-def play_song(user, device_id, song_id):
-    song_spotify_id = Song.objects.get(id=song_id).spotify_id
-    put(
-        f"https://api.spotify.com/v1/me/player/play?device_id={device_id}",
-        user,
-        json={"uris": [f"spotify:track:{song_spotify_id}"], "position_ms": 0},
-    )
 
 
 def generate_question(user, playlist_id, mode):

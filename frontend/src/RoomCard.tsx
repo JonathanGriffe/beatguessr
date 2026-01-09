@@ -17,12 +17,13 @@ type ScoreEvent =
 
 type QuestionStartsEvent = {
     type: "question_starts",
-    timer: number
+    timer: number,
+    preview_url: string
 }
 
 type Event = ScoreEvent | QuestionStartsEvent;
 
-export default function RoomCard({ settingsRef, startRound, enterRoom }: { settingsRef: React.RefObject<Settings>, startRound: (timer: number) => void, enterRoom: () => void }) {
+export default function RoomCard({ settingsRef, startRound, enterRoom }: { settingsRef: React.RefObject<Settings>, startRound: (timer: number, preview_url: string) => void, enterRoom: () => void }) {
     const [roomName, setRoomName] = useState<string | null>(settingsRef.current.roomName);
     const [scores, setScores] = useState<Record<string, number>>({});
     const [correctGuesses, setCorrectGuesses] = useState<string[]>([]);
@@ -47,14 +48,14 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
             return;
         }
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/room/${roomName}/?device_id=${settingsRef.current.deviceId}`);
+        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/room/${roomName}/`);
 
         socket.onmessage = (event) => {
             const data: Event = JSON.parse(event.data);
 
             if (data.type === "question_starts") {
                 if (startRound) {
-                    startRound(Number(data.timer));
+                    startRound(Number(data.timer), data.preview_url);
                     setCorrectGuesses([]);
                     setPartialGuesses([]);
                 }
@@ -68,7 +69,7 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
         return () => {
             socket.close();
         }
-    }, [roomName, settingsRef.current.deviceId])
+    }, [roomName])
 
     return (
         <div className="h-40 w-80 md:h-60 md:w-110 border-5 border-lighterblue rounded-xl flex flex-col justify-center items-center p-2 md:p-5 gap-5 text-darkblue font-bold relative">
