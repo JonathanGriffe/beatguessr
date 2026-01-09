@@ -10,7 +10,6 @@ export interface Settings {
     roundTimer: number;
     mode: 'casual' | 'training';
     roomName: string | null;
-    deviceId: string | null;
     guestUsername: string | null;
 }
 

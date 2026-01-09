@@ -1,12 +1,10 @@
 import json
 import logging
-from urllib.parse import parse_qs
 
-from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 from quiz.constants import QUESTIONS_CACHE_TIMEOUT
-from quiz.services.question import get_user_question_key, play_song
+from quiz.services.question import get_user_question_key
 from quiz.services.room import get_room_key, process_room_event
 
 logger = logging.getLogger(__name__)
@@ -14,13 +12,11 @@ logger = logging.getLogger(__name__)
 
 class RoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        qs = parse_qs(self.scope["query_string"].decode())
         user = self.scope["user"]
         room_name = self.scope["url_route"]["kwargs"]["room_name"]
         guest_username = self.scope["session"].get("guest_username")
-        self.device_id = qs.get("device_id")[0]
         self.room_name = room_name
-        if not room_name or not user or (not self.device_id and not guest_username):
+        if not room_name or not user:
             await self.close()
         room_data = cache.get(get_room_key(room_name))
 
@@ -67,14 +63,16 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps(event))
 
     async def question_starts(self, event):
-        if self.scope["user"].is_authenticated:
-            await sync_to_async(play_song)(self.scope["user"], self.device_id, event["song_id"])
         cache.set(
             get_user_question_key(self.scope["session"].get("guest_username") or self.scope["user"].id),
             {"song_id": event["song_id"], "mode": "room", "room_name": self.room_name},
             QUESTIONS_CACHE_TIMEOUT,
         )
-        await self.send(text_data=json.dumps({"type": "question_starts", "timer": event["timer"]}))
+        await self.send(
+            text_data=json.dumps(
+                {"type": "question_starts", "timer": event["timer"], "preview_url": event["preview_url"]}
+            )
+        )
 
     async def player_guessed(self, event):
         await self.send(text_data=json.dumps(event))

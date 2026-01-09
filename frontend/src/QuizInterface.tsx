@@ -8,7 +8,7 @@ import { Button } from './components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
 import { Spinner } from './components/ui/spinner';
 import type { SpotifyPlaylist, Track } from './lib/types';
-import { post } from './utils/utils';
+import { get, post } from './utils/utils';
 
 declare global {
   interface Window {
@@ -23,7 +23,7 @@ export type QuizInterfaceHandle = {
   startRound: (timer: number, totalTimer?: number) => void;
 };
 
-function QuizInterface(props: { accessToken: string | null, roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string }) {
+function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string, authentified: boolean }) {
   const navigate = useNavigate();
 
   const [text, setText] = useState("");
@@ -38,6 +38,7 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   const timerRemaining = useRef<number>(0);
   const totalTimer = useRef<number | undefined>(undefined);
   const [guesses, setGuesses] = useState<string[]>([]);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
 
   const spotifyUserId = useRef<string | null>(null);
@@ -49,6 +50,34 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   const answerStatusTimerId = useRef<number | undefined>(undefined);
 
   const [isQuestion, setIsQuestion] = useState<boolean>(false);
+
+  const refresh = () => {
+    return get(`/api/accounts/refresh/`, navigate).then(res => res.json())
+      .then(data => {
+        setAccessToken(data.access_token);
+        return data.access_token;
+      })
+  }
+
+  const fetchWithToken = (url: string, { method, headers, body }: { method: string, headers?: Record<string, string>, body?: string }): Promise<Response> => {
+    return fetch(url, {
+      method,
+      headers: {
+        ...headers,
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(body),
+    }).then((response) => {
+      if (response.status >= 400) {
+        return refresh().then((accessToken) =>
+          fetch(url, { method, headers: { ...headers, 'Authorization': `Bearer ${accessToken}` }, body: JSON.stringify(body) }));
+      }
+      return response;
+    });
+
+  }
+
+
 
   useImperativeHandle(props.ref, () => ({
     startRound(timer: number, totalFixedTimer?: number) {
@@ -68,11 +97,8 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   }
 
   const getUserData = () => {
-    fetch(`https://api.spotify.com/v1/me`, {
+    fetchWithToken(`https://api.spotify.com/v1/me`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${props.accessToken}`
-      }
     }).then(data => {
       data.json().then(data => {
         spotifyUserId.current = data.id;
@@ -83,11 +109,8 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
 
 
   const getPlaylists = () => {
-    fetch(`https://api.spotify.com/v1/me/playlists`, {
+    fetchWithToken(`https://api.spotify.com/v1/me/playlists`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${props.accessToken}`
-      }
     }).then(data => {
       data.json().then(data => {
         setSpotifyPlaylists(data.items.filter((playlist: any) => playlist.owner.id === spotifyUserId.current).map((playlist: any) => ({ id: playlist.id, name: playlist.name })));
@@ -97,10 +120,10 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
 
 
   const addToPlaylist = (playlist_id: string) => {
-    fetch(`https://api.spotify.com/v1/playlists/${playlist_id}/tracks`, {
+    fetchWithToken(`https://api.spotify.com/v1/playlists/${playlist_id}/tracks`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${props.accessToken}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ uris: [`spotify:track:${playlist_id}`] })
@@ -109,11 +132,8 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
 
   const getSongLiked = (spotify_id: string) => {
     setSongLiked('loading');
-    fetch(`https://api.spotify.com/v1/me/tracks/contains?ids=${spotify_id}`, {
+    fetchWithToken(`https://api.spotify.com/v1/me/tracks/contains?ids=${spotify_id}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${props.accessToken}`
-      }
     }).then(data => {
       data.json().then(data => {
         setSongLiked(data[0] ? 'true' : 'false');
@@ -124,11 +144,8 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   const toggleSongLiked = () => {
     const method = songLiked === 'true' ? 'DELETE' : 'PUT';
     setSongLiked('loading');
-    fetch(`https://api.spotify.com/v1/me/tracks?ids=${track.spotify_id}`, {
+    fetchWithToken(`https://api.spotify.com/v1/me/tracks?ids=${track.spotify_id}`, {
       method: method,
-      headers: {
-        'Authorization': `Bearer ${props.accessToken}`
-      }
     }).then(() => {
       setSongLiked(method === 'DELETE' ? 'false' : 'true');
     })
@@ -221,18 +238,18 @@ function QuizInterface(props: { accessToken: string | null, roundEndCallback: Re
   }
 
   useEffect(() => {
-    if (!props.accessToken) {
-      return;
+    if (props.authentified) {
+      refresh().then(getUserData);
     }
-    getUserData();
-  }, [props.accessToken])
+
+  }, [])
 
 
   return (
     <div className="md:w-full md:h-full overflow-hidden flex items-center justify-center">
       <div className="relative flex flex-col w-full items-center pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
         <div className="md:w-140 md:h-15 flex items-end">
-          {props.accessToken && (!isQuestion ?
+          {(props.authentified && !isQuestion ?
             <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
               <div className="cursor-pointer">
                 {
