@@ -81,11 +81,13 @@ export default function SettingsCard({ settingsRef, setVolume, roomStatus }: Set
 
                     </div></>
             }
-            {roomStatus === 'none' &&
-                <ButtonGroup>
-                    <Button className={buttonStyle(modeValue === "casual")} onClick={() => setMode('casual')}>Casual</Button>
-                    <Button className={buttonStyle(modeValue === "training")} onClick={() => setMode('training')}>Training</Button>
-                </ButtonGroup>}
+            <div className="h-9">
+                {roomStatus === 'none' &&
+                    <ButtonGroup>
+                        <Button className={buttonStyle(modeValue === "casual")} onClick={() => setMode('casual')}>Casual</Button>
+                        <Button className={buttonStyle(modeValue === "training")} onClick={() => setMode('training')}>Training</Button>
+                    </ButtonGroup>}
+            </div>
         </div >
     )
 }
