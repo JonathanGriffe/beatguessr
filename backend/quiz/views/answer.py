@@ -78,9 +78,7 @@ class AnswerView(APIView):
             cache.set(
                 question_key,
                 {
-                    "song_id": question_data["song_id"],
-                    "mode": question_data["mode"],
-                    "room_name": question_data.get("room_name"),
+                    **question_data,
                     "is_title_correct": is_title_correct,
                     "is_artist_correct": is_artist_correct,
                 },
