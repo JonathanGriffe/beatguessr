@@ -29,10 +29,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
         logger.info("User joined room", extra={"room_name": room_name, "user_id": user.id})
         await process_room_event(
             "player_joins",
-            lambda data: {**data, "scores": {**data["scores"], guest_username or user.name: 0}},
+            lambda data: {**data, "scores": {**data["scores"], guest_username or user.username: 0}},
             self.room_name,
             self.channel_layer,
-            guest_username or user.name,
+            guest_username or user.username,
         )
 
     async def disconnect(self, close_code):
@@ -47,11 +47,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 "player_leaves",
                 lambda data: {
                     **data,
-                    "scores": {k: v for k, v in data["scores"].items() if k != self.scope["user"].name},
+                    "scores": {k: v for k, v in data["scores"].items() if k != self.scope["user"].username},
                 },
                 self.room_name,
                 self.channel_layer,
-                self.scope["session"].get("guest_username") or self.scope["user"].name,
+                self.scope["session"].get("guest_username") or self.scope["user"].username,
             )
 
             await self.channel_layer.group_discard(self.room_name, self.channel_name)

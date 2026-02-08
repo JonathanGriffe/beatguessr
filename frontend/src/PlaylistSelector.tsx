@@ -6,7 +6,7 @@ import PlaylistCard from "./PlaylistCard";
 import PlaylistImporterCard from "./PlaylistImporter";
 import { get } from "./utils/utils";
 
-function PlaylistSelector() {
+function PlaylistSelector({ authenticated }: { authenticated: boolean }) {
     const navigate = useNavigate();
     const [categories, setCategories] = useState<{ [key: string]: Playlist[] }>({});
 
@@ -31,7 +31,7 @@ function PlaylistSelector() {
 
     useEffect(() => {
         get(`/api/quiz/playlists/`, navigate).then(res => res.json()).then(data => {
-            if (!("My Playlists" in data)) {
+            if (!("My Playlists" in data) && authenticated) {
                 data["My Playlists"] = [];
             }
             setCategories(data);

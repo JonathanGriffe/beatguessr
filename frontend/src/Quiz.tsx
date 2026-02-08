@@ -85,8 +85,8 @@ function Quiz() {
   return (
     <div className='w-full h-full flex-1 relative flex flex-col items-center justify-center'>
       {(playing ?
-        <QuizInterface roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} authentified={settingsRef.current.guestUsername ? false : true} />
-        : <Button onClick={() => { setPlaying(true); startRound() }} className="hover:cursor-pointer bg-darkblue size-60">
+        <QuizInterface roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} />
+        : <Button onClick={() => { setPlaying(true); startRound() }} className="hover:cursor-pointer bg-transparent hover:bg-gray-500/20 size-60">
           <Play className="size-full" />
         </Button>
       )}

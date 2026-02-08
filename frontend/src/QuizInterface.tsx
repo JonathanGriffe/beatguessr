@@ -1,14 +1,12 @@
-import { Check, CirclePlus, Pause, Play, Plus } from 'lucide-react';
-import { useEffect, useImperativeHandle, useRef, useState, type Ref, type RefObject } from 'react';
+import { Pause, Play } from 'lucide-react';
+import { useImperativeHandle, useRef, useState, type Ref, type RefObject } from 'react';
 import { useNavigate } from 'react-router';
 import GuessInput from './GuessInput';
 import TrackCard from './TrackCard';
 import './WebPlayback.css';
 import { Button } from './components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu';
-import { Spinner } from './components/ui/spinner';
-import type { SpotifyPlaylist, Track } from './lib/types';
-import { get, post } from './utils/utils';
+import type { Track } from './lib/types';
+import { post } from './utils/utils';
 
 declare global {
   interface Window {
@@ -23,7 +21,7 @@ export type QuizInterfaceHandle = {
   startRound: (timer: number, totalTimer?: number) => void;
 };
 
-function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string, authentified: boolean }) {
+function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Ref<QuizInterfaceHandle>, roomStatus: string }) {
   const navigate = useNavigate();
 
   const [text, setText] = useState("");
@@ -38,45 +36,13 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
   const timerRemaining = useRef<number>(0);
   const totalTimer = useRef<number | undefined>(undefined);
   const [guesses, setGuesses] = useState<string[]>([]);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
 
-  const spotifyUserId = useRef<string | null>(null);
-  const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
-
-  const [songLiked, setSongLiked] = useState<'loading' | 'true' | 'false'>('loading');
   const [playing, setPlaying] = useState<boolean>(true);
 
   const answerStatusTimerId = useRef<number | undefined>(undefined);
 
   const [isQuestion, setIsQuestion] = useState<boolean>(false);
-
-  const refresh = () => {
-    return get(`/api/accounts/refresh/`, navigate).then(res => res.json())
-      .then(data => {
-        setAccessToken(data.access_token);
-        return data.access_token;
-      })
-  }
-
-  const fetchWithToken = (url: string, { method, headers, body }: { method: string, headers?: Record<string, string>, body?: string }): Promise<Response> => {
-    return fetch(url, {
-      method,
-      headers: {
-        ...headers,
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify(body),
-    }).then((response) => {
-      if (response.status >= 400) {
-        return refresh().then((accessToken) =>
-          fetch(url, { method, headers: { ...headers, 'Authorization': `Bearer ${accessToken}` }, body: JSON.stringify(body) }));
-      }
-      return response;
-    });
-
-  }
-
 
 
   useImperativeHandle(props.ref, () => ({
@@ -94,61 +60,6 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
     setTimerLength(roundTimer * 1000);
     startTimer(roundTimer * 1000);
     setIsQuestion(true);
-  }
-
-  const getUserData = () => {
-    fetchWithToken(`https://api.spotify.com/v1/me`, {
-      method: 'GET',
-    }).then(data => {
-      data.json().then(data => {
-        spotifyUserId.current = data.id;
-        getPlaylists();
-      })
-    })
-  }
-
-
-  const getPlaylists = () => {
-    fetchWithToken(`https://api.spotify.com/v1/me/playlists`, {
-      method: 'GET',
-    }).then(data => {
-      data.json().then(data => {
-        setSpotifyPlaylists(data.items.filter((playlist: any) => playlist.owner.id === spotifyUserId.current).map((playlist: any) => ({ id: playlist.id, name: playlist.name })));
-      })
-    })
-  }
-
-
-  const addToPlaylist = (playlist_id: string) => {
-    fetchWithToken(`https://api.spotify.com/v1/playlists/${playlist_id}/tracks`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ uris: [`spotify:track:${playlist_id}`] })
-    })
-  }
-
-  const getSongLiked = (spotify_id: string) => {
-    setSongLiked('loading');
-    fetchWithToken(`https://api.spotify.com/v1/me/tracks/contains?ids=${spotify_id}`, {
-      method: 'GET',
-    }).then(data => {
-      data.json().then(data => {
-        setSongLiked(data[0] ? 'true' : 'false');
-      })
-    })
-  }
-
-  const toggleSongLiked = () => {
-    const method = songLiked === 'true' ? 'DELETE' : 'PUT';
-    setSongLiked('loading');
-    fetchWithToken(`https://api.spotify.com/v1/me/tracks?ids=${track.spotify_id}`, {
-      method: method,
-    }).then(() => {
-      setSongLiked(method === 'DELETE' ? 'false' : 'true');
-    })
   }
 
   const sendResponse = (text: string) => {
@@ -225,9 +136,6 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
   const endRound = (track: Track) => {
     setIsQuestion(false);
     setTrack(track);
-    if (track.spotify_id) {
-      getSongLiked(track.spotify_id);
-    }
     const roundEndTimer = totalTimer.current ? totalTimer.current - (Date.now() - timerStart.current) : ROUND_SEPARATION_TIMER;
     startTimer(roundEndTimer);
     clearTimeout(timeoutRef.current);
@@ -237,45 +145,18 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
     }, roundEndTimer);
   }
 
-  useEffect(() => {
-    if (props.authentified) {
-      refresh().then(getUserData);
-    }
-
-  }, [])
-
 
   return (
     <div className="md:w-full md:h-full overflow-hidden flex items-center justify-center">
       <div className="relative flex flex-col w-full items-center pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
-        <div className="md:w-140 md:h-15 flex items-end">
-          {(props.authentified && !isQuestion ?
-            <div className="text-greenblue flex flex-row items-center justify-between border-5 border-greenblue rounded-xl p-2 w-full">
-              <div className="cursor-pointer">
-                {
-                  songLiked === 'true' ? <div className="w-8 h-8 rounded-2xl bg-greenblue flex items-center justify-center">
-                    <Check className="text-beige w-6 h-6" onClick={toggleSongLiked} /></div> :
-                    songLiked === 'false' ? <CirclePlus className="w-8 h-8" onClick={toggleSongLiked} /> :
-                      <Spinner className="w-8 h-8" />
-                }
-              </div>
+        <div className="md:w-25 md:h-15 flex items-end justify-center">
+          {(!isQuestion ?
+            <div className="text-greenblue flex flex-row items-center justify-center border-5 border-greenblue rounded-xl p-2 w-15 h-full">
               <div className="cursor-pointer">
                 {
                   props.roomStatus != 'follower' && (playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />)
                 }
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Plus className="w-8 h-8 cursor-pointer" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuGroup>
-                    {
-                      spotifyPlaylists.map((playlist) => <DropdownMenuItem key={playlist.id} onSelect={() => addToPlaylist(playlist.id)}>{playlist.name}</DropdownMenuItem>)
-                    }
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
             :
             <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
