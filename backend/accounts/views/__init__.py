@@ -1,15 +1,15 @@
-from .callback import CallbackView
 from .client_id import ClientIdView
 from .guest_user import GuestUserView
+from .login import LoginView
 from .logout import LogoutView
-from .refresh import RefreshView
+from .signup import SignupView
 from .user import UserView
 
 __all__ = [
-    "CallbackView",
     "ClientIdView",
     "GuestUserView",
     "LogoutView",
-    "RefreshView",
     "UserView",
+    "LoginView",
+    "SignupView",
 ]

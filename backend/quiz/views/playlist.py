@@ -10,7 +10,6 @@ from rest_framework.views import APIView
 
 
 class PlaylistsView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         grouped_playlists = defaultdict(list)

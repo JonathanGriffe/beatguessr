@@ -18,7 +18,7 @@ class RoomView(APIView):
             get_room_key(room_id),
             {
                 "user_id": request.user.id,
-                "scores": {request.user.name: 0},
+                "scores": {request.user.username: 0},
                 "partial_guesses": [],
                 "correct_guesses": [],
                 "current_song_id": None,

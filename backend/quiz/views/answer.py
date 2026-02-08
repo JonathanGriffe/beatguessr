@@ -25,7 +25,7 @@ class AnswerView(APIView):
             return JsonResponse({"error": "User not authenticated"}, status=401)
 
         user_id = guest_username or user.id
-        username = guest_username or user.name
+        username = guest_username or user.username
 
         question_key = get_user_question_key(user_id)
         question_data = cache.get(question_key)
