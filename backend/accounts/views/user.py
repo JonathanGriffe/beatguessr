@@ -12,7 +12,7 @@ class UserView(APIView):
         song_count = user.questions.distinct("song").count()
         return JsonResponse(
             {
-                "name": user.name,
+                "name": user.username,
                 "question_count": question_count,
                 "song_count": song_count,
             }
