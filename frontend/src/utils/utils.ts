@@ -31,7 +31,7 @@ function getHeaders() {
   return requestHeaders;
 }
 
-function request(method: string, url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string | boolean>) {
+function request(method: string, url: string, navigate: NavigateFunction | null, headers?: Record<string, string>, body?: Record<string, string | boolean>) {
   const requestHeaders = getHeaders();
   Object.entries(headers ?? {}).forEach(([key, value]) => {
     requestHeaders.set(key, value);
@@ -42,11 +42,11 @@ function request(method: string, url: string, navigate: NavigateFunction, header
     credentials: 'include',
     headers: requestHeaders,
     body: JSON.stringify(body),
-  }).then(successOrRedirect(navigate));
+  }).then(navigate ? successOrRedirect(navigate) : (res: Response) => (res));
 }
 
 const get = (url: string, navigate: NavigateFunction, headers?: Record<string, string>) => request('GET', url, navigate, headers);
-const post = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string | boolean>) => request('POST', url, navigate, headers, body);
+const post = (url: string, navigate: NavigateFunction | null, headers?: Record<string, string>, body?: Record<string, string | boolean>) => request('POST', url, navigate, headers, body);
 const put = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string | boolean>) => request('PUT', url, navigate, headers, body);
 const del = (url: string, navigate: NavigateFunction, headers?: Record<string, string>, body?: Record<string, string | boolean>) => request('DELETE', url, navigate, headers, body);
 

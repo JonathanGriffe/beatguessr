@@ -18,6 +18,9 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   let [UserData, setUserData] = useState<UserData | null>(null);
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const guestUsername = searchParams.get('guest_username');
+
   function logout() {
     post(`/api/accounts/logout/`, navigate).then(() => navigate('/login'));
   }
@@ -30,8 +33,10 @@ function App() {
   }
 
   useEffect(() => {
-    get(`/api/accounts/user/`, navigate).then(res => res.json())
-      .then(data => setUserData(data));
+    if (!guestUsername) {
+      get(`/api/accounts/user/`, navigate).then(res => res.json())
+        .then(data => setUserData(data));
+    }
   }, []);
   return (
     <div className="flex h-screen min-w-screen gap-10 items-center justify-center p-10 bg">
@@ -42,10 +47,10 @@ function App() {
           </div>
           <Button onClick={joinRoom} className="w-30 h-10 text-black bg-orange-400 hover:bg-orange-500 hover:cursor-pointer shadow-md hover:shadow-lg">Join Room</Button>
         </div>
-        <PlaylistSelector />
+        <PlaylistSelector authenticated={!guestUsername} />
       </div>
-      <div className="border-6 border-cpurple flex flex-col gap-4 ml-auto  mr-10 p-4 rounded-lg">
-        <h1 className="font-bold inline text-lighterblue text-5xl">{UserData?.name}</h1>
+      <div className="border-6 border-cpurple flex flex-col gap-4 ml-auto  mr-10 p-4 rounded-lg w-100 items-center">
+        <h1 className="font-bold inline text-lighterblue text-4xl overflow-hidden">{UserData?.name}</h1>
         <div className="flex flex-col items-center">
           <span className="font-light text-md">Rounds played</span>
           <span className="font-bold text-lg">{UserData?.question_count}</span>
