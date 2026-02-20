@@ -47,13 +47,18 @@ def import_playlist(playlist_id, category, user=None):
     with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
 
         def add_preview_url(track):
-            track["preview_url"] = get_preview_url(track["id"])
+            try:
+                track["preview_url"] = get_preview_url(track["id"])
+            except AttributeError:
+                return
             return track
 
         futures = [executor.submit(add_preview_url, track) for track in tracks_to_add]
         enriched_tracks = [future.result() for future in concurrent.futures.as_completed(futures)]
 
     for track in enriched_tracks:
+        if track["preview_url"] is None:
+            continue
         song = Song.objects.create(
             spotify_id=track["id"],
             title=track["name"],
