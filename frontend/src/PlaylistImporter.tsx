@@ -21,6 +21,7 @@ const PlaylistImporterCard = (props: { addPlaylist: (playlist: any) => void }) =
                 playlist_id: playlist_id,
             }
         ).then(res => {
+            setInputValue('');
             setLoading(false);
             if (res.status === 200) {
                 res.json().then(playlist => {
