@@ -6,7 +6,7 @@ from quiz.models.playlist import Playlist
 from quiz.models.song import Song
 from quiz.services.playlist import create_playlists, get_preview_url
 
-TEST_PLAYLIST_ID = "25Li3GPIL8xkoB5FCRedrv"
+TEST_PLAYLIST_ID = "4NQZ7BKCivE5n9T3Hrlazu"
 TEST_TRACK = "40YbWniIEmqy6s58fYXLUh"
 
 
@@ -21,7 +21,6 @@ def test_create_playlist(open, load):
     assert playlist.category == "test"
 
     playlist_length = get(f"https://api.spotify.com/v1/playlists/{playlist.spotify_id}").json()
-    print(playlist_length)
     playlist_length = playlist_length["tracks"]["total"]
     assert Song.objects.count() == playlist_length
 

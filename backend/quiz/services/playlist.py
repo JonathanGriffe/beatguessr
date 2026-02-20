@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def get_items(playlist_id, user=None):
     item_fields = "next,items(track(name,id,popularity,artists(name),album(images(url))))"
     fields = f"name, images(url),tracks({item_fields})"
-    data = get(f"https://api.spotify.com/v1/playlists/{playlist_id}?market=FR&fields={fields}&limit=100", user).json()
+    data = get(f"https://api.spotify.com/v1/playlists/{playlist_id}?market=FR&fields={fields}&limit=100").json()
     tracks = [item["track"] for item in data["tracks"]["items"]]
     image_link = data["images"][0]["url"]
     name = data["name"]
@@ -57,7 +57,7 @@ def import_playlist(playlist_id, category, user=None):
         enriched_tracks = [future.result() for future in concurrent.futures.as_completed(futures)]
 
     for track in enriched_tracks:
-        if track["preview_url"] is None:
+        if track is None:
             continue
         song = Song.objects.create(
             spotify_id=track["id"],

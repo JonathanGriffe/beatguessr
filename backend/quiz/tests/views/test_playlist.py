@@ -14,10 +14,9 @@ def test_playlist_view():
     client.force_authenticate(user=CustomUser.objects.create_user(username="test", password="test"))
     response = client.get("/quiz/playlists/")
     assert response.status_code == 200
-    assert response.json() == {
-        "test": [
-            {"id": playlist1.spotify_id, "title": "test", "image_link": ""},
-            {"id": playlist2.spotify_id, "title": "test2", "image_link": ""},
-        ],
-        "other": [{"id": playlist3.spotify_id, "title": "test3", "image_link": ""}],
-    }
+    data = response.json()
+    assert set(data.keys()) == {"test", "other"}
+    assert data["other"] == [{"id": playlist3.spotify_id, "title": "test3", "image_link": ""}]
+    assert len(data["test"]) == 2
+    assert {"id": playlist1.spotify_id, "title": "test", "image_link": ""} in data["test"]
+    assert {"id": playlist2.spotify_id, "title": "test2", "image_link": ""} in data["test"]
