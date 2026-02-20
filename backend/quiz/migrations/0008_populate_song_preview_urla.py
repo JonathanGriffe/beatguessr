@@ -15,6 +15,8 @@ def populate_preview_url(apps, schema_editor):
         song.save(update_fields=["preview_url"])
         song.refresh_from_db()
 
+    Song.objects.filter(preview_url__isnull=True).delete()
+
 
 class Migration(migrations.Migration):
 
