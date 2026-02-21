@@ -27,7 +27,7 @@ def get_items(playlist_id, user=None):
         next_url = f"{next_url.split('fields=')[0]}fields={item_fields}"
         while next_url and i < PLAYLIST_SIZE_LIMIT:
             i += 1
-            response = get(next_url, user)
+            response = get(next_url)
             data = response.json()
             for track in data["items"]:
                 tracks.append(track["track"])
