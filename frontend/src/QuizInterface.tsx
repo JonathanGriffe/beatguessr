@@ -147,51 +147,49 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
 
 
   return (
-    <div className="md:w-full md:h-full overflow-hidden flex items-center justify-center">
-      <div className="relative flex flex-col w-full items-center pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
-        {
-          props.roomStatus == 'follower' && !timeoutRef.current && <p className="text-lighterblue font-bold">Waiting for host to start the quiz...</p>
-        }
-        <div className="md:w-25 md:h-15 flex items-end justify-center">
-          {props.roomStatus != 'follower' &&
-            <>
-              {(!isQuestion ?
-                <div className="text-greenblue flex flex-row items-center justify-center border-5 border-greenblue rounded-xl p-2 w-15 h-full">
-                  <div className="cursor-pointer">
-                    {
-                      playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
-                    }
-                  </div>
+    <div className="flex-1 w-full overflow-hidden flex items-center justify-start flex-col pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
+      {
+        props.roomStatus == 'follower' && !timeoutRef.current && <p className="text-lighterblue font-bold">Waiting for the next round to start...</p>
+      }
+      <div className="md:w-25 md:h-15 flex items-end justify-center">
+        {props.roomStatus != 'follower' &&
+          <>
+            {(!isQuestion ?
+              <div className="text-greenblue flex flex-row items-center justify-center border-5 border-greenblue rounded-xl p-2 w-15 h-full">
+                <div className="cursor-pointer">
+                  {
+                    playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+                  }
                 </div>
-                :
-                <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
-              }
-            </>
-          }
-        </div>
-        <TrackCard track={track} />
-        <div className="flex flex-col items-center h-1/3">
-          <p>{!isQuestion ? "Next round in" : "Round ends in"}</p>
-          <p className="text-greenblue font-bold text-4xl">{timer}</p>
-        </div>
-        <div className="w-full">
-          <div className="h-3 w-full rounded overflow-hidden">
-            {isQuestion ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
-          </div>
-          <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              sendResponse(text);
+              </div>
+              :
+              <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
             }
-          }} />
-        </div>
-        {guesses.length > 0 &&
-          <div className="absolute pt-5 top-full flex flex-col gap-1 w-140 items-center">
-            <span className='text-greenblue text-2xl'>Guesses :</span>
-            {guesses.map((guess, index) => <span key={index}>{guess}</span>)}
-          </div>
+          </>
         }
       </div>
-    </div>
+      <TrackCard track={track} />
+      <div className="flex flex-col items-center">
+        <p>{!isQuestion ? "Next round in" : "Round ends in"}</p>
+        <p className="text-greenblue font-bold text-4xl">{timer}</p>
+      </div>
+      <div className="w-full">
+        <div className="h-3 w-full rounded overflow-hidden">
+          {isQuestion ? <div className='h-full bg-darkblue animate-fillBar' style={{ animationDuration: `${timerLength}ms` }}></div> : ''}
+        </div>
+        <GuessInput value={text} onChange={(e) => setText(e.target.value)} labelColor={answerStatus === 'correct' ? 'green' : answerStatus === 'wrong' ? 'red' : 'black'} onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            sendResponse(text);
+          }
+        }} />
+      </div>
+      {guesses.length > 0 &&
+        <div className="flex-1 pt-5 flex flex-col gap-1 w-140 items-center h-50 overflow-y-hidden">
+          <span className='text-greenblue text-2xl'>Guesses :</span>
+          {guesses.map((guess, index) => <span key={index}>{guess}</span>)}
+        </div>
+      }
+    </div >
   );
 }
 

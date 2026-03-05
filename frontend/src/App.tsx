@@ -39,8 +39,8 @@ function App() {
     }
   }, []);
   return (
-    <div className="flex h-screen min-w-screen gap-10 items-center justify-center p-10 bg">
-      <div className="w-full flex flex-col m-15 gap-5">
+    <div className="flex flex-col-reverse md:flex-row h-screen min-w-screen gap-3 md:gap-10 items-center justify-start p-5 pb-0 pt-20 md:p-10 bg">
+      <div className="w-full flex flex-col m-2 md:m-15 gap-3 md:gap-5">
         <div className="flex flex-row gap-3 items-center h-11">
           <div className="flex w-52 h-11 p-1 bg-gray-500/20 rounded-lg backdrop-blur-md">
             <Input className=" h-full w-50 bg-white" placeholder='Room Code' ref={inputRef}></Input>
@@ -49,15 +49,17 @@ function App() {
         </div>
         <PlaylistSelector authenticated={!guestUsername} />
       </div>
-      <div className="border-6 border-cpurple flex flex-col gap-4 ml-auto  mr-10 p-4 rounded-lg w-100 items-center">
+      <div className="border-3 md:border-6 border-cpurple flex flex-col gap-4 ml-auto md:mr-10 p-4 rounded-lg w-92 md:w-100 items-center">
         <h1 className="font-bold inline text-lighterblue text-4xl overflow-hidden">{UserData?.name}</h1>
-        <div className="flex flex-col items-center">
-          <span className="font-light text-md">Rounds played</span>
-          <span className="font-bold text-lg">{UserData?.question_count}</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="font-light text-md">Unique songs guessed</span>
-          <span className="font-bold text-lg">{UserData?.song_count}</span>
+        <div className="flex flex-row md:flex-col items-center gap-8">
+          <div className="flex flex-col items-center">
+            <span className="font-light text-md">Rounds played</span>
+            <span className="font-bold text-lg">{UserData?.question_count}</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="font-light text-md">Unique songs guessed</span>
+            <span className="font-bold text-lg">{UserData?.song_count}</span>
+          </div>
         </div>
         <Button className="bg-purple-800 hover:bg-purple-900 hover:cursor-pointer" onClick={logout}>Logout</Button>
       </div>
