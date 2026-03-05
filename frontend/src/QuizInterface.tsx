@@ -149,17 +149,24 @@ function QuizInterface(props: { roundEndCallback: RefObject<() => void>, ref: Re
   return (
     <div className="md:w-full md:h-full overflow-hidden flex items-center justify-center">
       <div className="relative flex flex-col w-full items-center pl-5 pr-5 md:pl-20 md:pr-20 gap-2 md:gap-6">
+        {
+          props.roomStatus == 'follower' && !timeoutRef.current && <p className="text-lighterblue font-bold">Waiting for host to start the quiz...</p>
+        }
         <div className="md:w-25 md:h-15 flex items-end justify-center">
-          {(!isQuestion ?
-            <div className="text-greenblue flex flex-row items-center justify-center border-5 border-greenblue rounded-xl p-2 w-15 h-full">
-              <div className="cursor-pointer">
-                {
-                  props.roomStatus != 'follower' && (playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />)
-                }
-              </div>
-            </div>
-            :
-            <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
+          {props.roomStatus != 'follower' &&
+            <>
+              {(!isQuestion ?
+                <div className="text-greenblue flex flex-row items-center justify-center border-5 border-greenblue rounded-xl p-2 w-15 h-full">
+                  <div className="cursor-pointer">
+                    {
+                      playing ? <Pause className="w-8 h-8" onClick={togglePlaying} /> : <Play className="w-8 h-8" onClick={togglePlaying} />
+                    }
+                  </div>
+                </div>
+                :
+                <Button className="hover:cursor-pointer w-full bg-greenblue" onClick={roundTimeout}>Give Up</Button>)
+              }
+            </>
           }
         </div>
         <TrackCard track={track} />

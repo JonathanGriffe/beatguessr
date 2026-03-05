@@ -70,10 +70,12 @@ function Quiz() {
   useEffect(() => {
     if (!settingsRef.current.roomName) {
       endRoundCallback.current = startRound;
+    } else {
+      setRoomStatus('follower');
+      setPlaying(true);
     }
     if (settingsRef.current.guestUsername) {
       get(`/api/accounts/guest_user/?guest_username=${settingsRef.current.guestUsername}`, navigate).then(() => {
-        setRoomStatus('follower');
         setPlaying(true);
       });
       return;

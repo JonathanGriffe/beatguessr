@@ -78,7 +78,6 @@ export default function SettingsCard({ settingsRef, setVolume, roomStatus }: Set
                             }}
                         />
                         <div ref={bubbleRef} className="absolute bottom-0">{roundTimerValue}</div>
-
                     </div></>
             }
             <div className="h-9">
