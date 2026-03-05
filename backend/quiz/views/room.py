@@ -12,6 +12,17 @@ from rest_framework.views import APIView
 class RoomView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        room_id = request.query_params.get("room")
+        if not room_id:
+            return JsonResponse({"error": "Room ID is required"}, status=400)
+
+        room_data = cache.get(get_room_key(room_id))
+        if not room_data:
+            return JsonResponse({"error": "Room not found"}, status=404)
+
+        return JsonResponse({"status": "success"})
+
     def post(self, request):
         room_id = "".join(random.choices(string.ascii_uppercase, k=6))
         cache.set(
