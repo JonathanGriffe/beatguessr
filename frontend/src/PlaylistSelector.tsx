@@ -38,7 +38,7 @@ function PlaylistSelector({ authenticated }: { authenticated: boolean }) {
         })
     }, []);
 
-    return (<div className="h-160 rounded-2xl border-8 border-lighterblue p-4 bg-beige">
+    return (<div className="h-85 md:h-160 rounded-2xl border-8 border-lighterblue p-4 bg-beige">
         {Object.keys(categories).length > 0 &&
             <Tabs defaultValue={sortCategories(Object.keys(categories))[0]}>
                 <TabsList className="bg-purple-200">
@@ -46,8 +46,9 @@ function PlaylistSelector({ authenticated }: { authenticated: boolean }) {
                         <TabsTrigger key={category} value={category} className="text-black data-[state=active]:text-white data-[state=active]:bg-lighterblue hover:cursor-pointer">{category}</TabsTrigger>
                     ))}
                 </TabsList>
+
                 {Object.entries(categories).map(([name, playlists]) => (
-                    <TabsContent key={name} value={name} className="flex flex-wrap gap-4">
+                    <TabsContent key={name} value={name} className="flex overflow-y-auto h-65 md:h-140 flex-wrap gap-4">
                         {playlists.map((playlist) => (
                             <PlaylistCard key={playlist.id} playlist={playlist} />
                         ))}
@@ -57,7 +58,7 @@ function PlaylistSelector({ authenticated }: { authenticated: boolean }) {
                     </TabsContent>
                 ))}
             </Tabs>}
-    </div>
+    </div >
     )
 }
 

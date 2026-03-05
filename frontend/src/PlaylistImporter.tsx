@@ -32,10 +32,10 @@ const PlaylistImporterCard = (props: { addPlaylist: (playlist: any) => void }) =
     };
 
     return (
-        <div className="rounded-xl border-lighterblue border-6 bg-beige w-60 h-60 flex flex-col items-center justify-center text-cyan">
+        <div className="rounded-xl border-lighterblue border-6 bg-beige w-30 h-30 md:w-60 md:h-60 flex flex-col items-center justify-center text-cyan">
             {loading ? <Spinner className="w-1/3 h-1/3" /> :
-                <div className="p-10 flex flex-col items-center justify-center w-full h-full gap-20">
-                    <div className="flex w-52 h-11 p-1 bg-gray-500/20 rounded-lg backdrop-blur-md">
+                <div className="p-5 md:p-10 flex flex-col items-center justify-center w-full h-full gap-10 md:gap-20">
+                    <div className="flex w-26 md:w-52 h-5 md:h-11 p-1 bg-gray-500/20 rounded-lg backdrop-blur-md">
                         <Input
                             type="text"
                             value={inputValue}

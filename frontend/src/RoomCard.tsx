@@ -72,19 +72,19 @@ export default function RoomCard({ settingsRef, startRound, enterRoom }: { setti
     }, [roomName])
 
     return (
-        <div className="h-40 w-80 md:h-60 md:w-110 border-5 border-lighterblue rounded-xl flex flex-col justify-center items-center p-2 md:p-5 gap-5 text-darkblue font-bold relative">
+        <div className="h-50 w-60 md:h-60 md:w-110 border-3 md:border-5 border-lighterblue rounded-xl flex flex-col justify-center items-center p-2 md:p-5 gap-5 text-darkblue font-bold relative">
             {
                 settingsRef.current.roomName ?
                     <div className="flex flex-col h-full w-full items-center">
-                        <span className="text-lg md:text-xl text-lighterblue">Room Name: {settingsRef.current.roomName}</span>
+                        <span className="text-sm md:text-xl text-lighterblue">Room Name: {settingsRef.current.roomName}</span>
                         <Table className="flex-1 w-full">
                             <TableBody className="bg-muted/50 text-xs md:text-base">
                                 {
                                     Object.entries(scores).sort((a, b) => b[1] - a[1]).map(([name, score]) => {
                                         return (
                                             <TableRow key={name} className={correctGuesses.includes(name) ? "bg-green-300" : (partialGuesses.includes(name) ? "bg-yellow-300" : "")}>
-                                                <TableCell className="p-1 md:p-2">{name}</TableCell>
-                                                <TableCell className="p-1 md:p-2">{score}</TableCell>
+                                                <TableCell className="p-1">{name}</TableCell>
+                                                <TableCell className="p-1">{score}</TableCell>
                                             </TableRow>
                                         )
                                     })

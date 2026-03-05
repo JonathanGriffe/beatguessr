@@ -44,9 +44,9 @@ export default function SettingsCard({ settingsRef, setVolume, roomStatus }: Set
     })
 
     return (
-        <div className="h-60 w-110 border-5 border-greenblue rounded-xl flex flex-col justify-center items-center p-5 gap-5 text-darkblue font-bold relative">
+        <div className="h-50 w-55 md:h-60 md:w-110 border-3 md:border-5 border-greenblue rounded-xl flex flex-col justify-center items-center p-5 gap-3 md:gap-5 text-darkblue font-bold relative">
             <span className="absolute top-0 font-bold text-2xl">Settings</span>
-            <div className="w-full flex flex-col justify-center items-center gap-1">
+            <div className="w-full flex flex-col justify-center items-center gap-1 mt-5">
                 <span className="font-light text-md">Volume</span>
                 <Slider
                     defaultValue={[settingsRef.current.volume]}

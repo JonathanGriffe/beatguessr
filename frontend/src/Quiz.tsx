@@ -85,7 +85,13 @@ function Quiz() {
   }, []);
 
   return (
-    <div className='w-full h-full flex-1 relative flex flex-col items-center justify-center'>
+    <div className='w-full h-full flex-1 relative flex flex-col items-center pt-20'>
+      <div className='w-full flex justify-between flex-row p-3 gap-5'>
+        {!settingsRef.current.guestUsername &&
+          <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
+        }
+        <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
+      </div>
       {(playing ?
         <QuizInterface roundEndCallback={endRoundCallback} ref={interfaceRef} roomStatus={roomStatus} />
         : <Button onClick={() => { setPlaying(true); startRound() }} className="hover:cursor-pointer bg-transparent hover:bg-gray-500/20 size-60">
@@ -93,18 +99,6 @@ function Quiz() {
         </Button>
       )}
       <audio ref={audioRef} />
-      {!settingsRef.current.guestUsername &&
-        <div className="absolute top-0 left-0 p-20">
-          <SettingsCard settingsRef={settingsRef} setVolume={setVolume} roomStatus={roomStatus} />
-        </div>
-      }
-      {
-        <div className="md:absolute md:top-0 md:right-0 md:p-20">
-          <RoomCard settingsRef={settingsRef} startRound={startRoomQuiz} enterRoom={() => { setRoomStatus('leader'); }} />
-
-        </div>
-      }
-
     </div>
   );
 }
