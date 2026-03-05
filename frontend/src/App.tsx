@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import './App.css';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
 import PlaylistSelector from './PlaylistSelector';
 import { get, post } from './utils/utils';
 
@@ -18,6 +19,9 @@ function App() {
   const inputRef = useRef<HTMLInputElement>(null);
   let [UserData, setUserData] = useState<UserData | null>(null);
 
+  const [roomErrorLabel, setRoomErrorLabel] = useState<string | null>(null);
+  const roomTimeoutRef = useRef<number | undefined>(undefined);
+
   const searchParams = new URLSearchParams(window.location.search);
   const guestUsername = searchParams.get('guest_username');
 
@@ -28,7 +32,17 @@ function App() {
   function joinRoom() {
     const roomCode = inputRef.current?.value;
     if (roomCode) {
-      navigate(`/quiz/?room=${roomCode}`);
+      fetch(`/api/quiz/room/?room=${roomCode}`).then(res => {
+        if (res.status === 404) {
+          setRoomErrorLabel("Room not found");
+          if (roomTimeoutRef.current) {
+            clearTimeout(roomTimeoutRef.current);
+          }
+          roomTimeoutRef.current = setTimeout(() => setRoomErrorLabel(null), 3000);
+        } else if (res.status === 200) {
+          navigate(`/quiz/?room=${roomCode}`);
+        }
+      });
     }
   }
 
@@ -41,11 +55,17 @@ function App() {
   return (
     <div className="flex flex-col-reverse md:flex-row h-screen min-w-screen gap-3 md:gap-10 items-center justify-start p-5 pb-0 pt-20 md:p-10 bg">
       <div className="w-full flex flex-col m-2 md:m-15 gap-3 md:gap-5">
-        <div className="flex flex-row gap-3 items-center h-11">
-          <div className="flex w-52 h-11 p-1 bg-gray-500/20 rounded-lg backdrop-blur-md">
-            <Input className=" h-full w-50 bg-white" placeholder='Room Code' ref={inputRef}></Input>
+        <div className="w-full flex flex-col">
+          <div className="h-5">
+            <Label className="text-sm text-red-500">{roomErrorLabel}</Label>
           </div>
-          <Button onClick={joinRoom} className="w-30 h-10 text-black bg-orange-400 hover:bg-orange-500 hover:cursor-pointer shadow-md hover:shadow-lg">Join Room</Button>
+          <div className="flex flex-row gap-3 items-center h-11">
+            <div className="flex w-52 h-11 p-1 bg-gray-500/20 rounded-lg backdrop-blur-md">
+              <Input className=" h-full w-50 bg-white" placeholder='Room Code' ref={inputRef}></Input>
+            </div>
+            <Button onClick={joinRoom} className="w-30 h-10 text-black bg-orange-400 hover:bg-orange-500 hover:cursor-pointer shadow-md hover:shadow-lg">Join Room</Button>
+          </div>
+
         </div>
         <PlaylistSelector authenticated={!guestUsername} />
       </div>
